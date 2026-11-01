@@ -5,7 +5,7 @@ from flask import Flask, abort, flash, redirect, render_template, request, url_f
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("SECRET_KEY", "troque-esta-chave")
+app.secret_key = os.environ.get("SECRET_KEY", "troque-esta-chave")  # necessária para flash()
 
 # Na Vercel só é possível escrever em /tmp
 if os.environ.get("VERCEL"):

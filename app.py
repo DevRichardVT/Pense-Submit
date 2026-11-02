@@ -5,28 +5,18 @@ from flask import Flask, abort, flash, redirect, render_template, request, url_f
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("SECRET_KEY", "troque-esta-chave")  # necessária para flash()
+app.secret_key = os.environ.get("SECRET_KEY", "troque-esta-chave")
 
-# Na Vercel só é possível escrever em /tmp
-if os.environ.get("VERCEL"):
-    app.config["UPLOAD_FOLDER"] = "/tmp/uploads"
-else:
-    app.config["UPLOAD_FOLDER"] = os.path.join(app.root_path, "static", "uploads")
-app.config["MAX_CONTENT_LENGTH"] = 4 * 1024 * 1024  # limite real da Vercel (~4,5 MB)
-os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
+# Tenta usar static/uploads; se o disco for somente leitura (Vercel), usa /tmp
+UPLOAD_FOLDER = os.path.join(app.root_path, "static", "uploads")
+try:
+    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+except OSError:
+    UPLOAD_FOLDER = "/tmp/uploads"
+    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-# Na Vercel só é possível escrever em /tmp
-if os.environ.get("VERCEL"):
-    app.config["UPLOAD_FOLDER"] = "/tmp/uploads"
-else:
-    app.config["UPLOAD_FOLDER"] = os.path.join(app.root_path, "static", "uploads")
-app.config["MAX_CONTENT_LENGTH"] = 4 * 1024 * 1024  # limite real da Vercel (~4,5 MB)
-os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
-
-# Pasta onde os PDFs enviados serão salvos (dentro de static/ para poderem ser abertos pelo navegador)
-app.config["UPLOAD_FOLDER"] = os.path.join(app.root_path, "static", "uploads")
-app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024  # limite de 10 MB
-os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+app.config["MAX_CONTENT_LENGTH"] = 4 * 1024 * 1024
 
 MODALIDADES = ["Ensino", "Pesquisa", "Extensão"]
 

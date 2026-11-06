@@ -1,5 +1,6 @@
 import psycopg2
 from database import get_connection
+from models.arquivo import Arquivo
 from models.autor import Autor
 from models.instituicao import Instituicao
 
@@ -36,6 +37,8 @@ class Formulario:
         dados_instituicao: dict,
         dados_form: dict,
         arquivo_bytes: bytes,
+        nome_arquivo: str = "trabalho.pdf",
+        usuario_id: int | None = None,
     ) -> int:
         autor_limpo = Autor.validar_dados(dados_autor)
         inst_limpa = Instituicao.validar_dados(dados_instituicao)
@@ -58,19 +61,27 @@ class Formulario:
                     inst_limpa["nome"],
                     inst_limpa["cidade"],
                 )
+                arquivo_id = Arquivo.criar(
+                    cur,
+                    nome_arquivo or f"{form_limpo['titulo']}.pdf",
+                    "application/pdf",
+                    arquivo_bytes,
+                )
                 cur.execute(
                     """
                     INSERT INTO formularios (
-                        autor_id, modalidade_id, instituicao_id,
+                        usuario_id, autor_id, modalidade_id, instituicao_id, arquivo_id,
                         titulo, resumo, arquivo, palavra_chave, area_conhecimento
                     )
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                     RETURNING id;
                     """,
                     (
+                        usuario_id,
                         autor_id,
                         form_limpo["modalidade_id"],
                         instituicao_id,
+                        arquivo_id,
                         form_limpo["titulo"],
                         form_limpo["resumo"],
                         psycopg2.Binary(arquivo_bytes),
@@ -103,11 +114,15 @@ class Formulario:
                         a.cidade AS autor_cidade,
                         i.id AS instituicao_id,
                         i.nome AS instituicao_nome,
-                        i.cidade AS instituicao_cidade
+                        i.cidade AS instituicao_cidade,
+                        f.usuario_id,
+                        u.foto_arquivo_id AS usuario_foto_id,
+                        f.arquivo_id
                     FROM formularios f
                     JOIN modalidades_formularios m ON m.id = f.modalidade_id
                     JOIN autores a ON a.id = f.autor_id
                     JOIN instituicoes i ON i.id = f.instituicao_id
+                    LEFT JOIN usuarios u ON u.id = f.usuario_id
                     ORDER BY f.id DESC;
                     """
                 )
@@ -135,11 +150,15 @@ class Formulario:
                         a.cidade AS autor_cidade,
                         i.id AS instituicao_id,
                         i.nome AS instituicao_nome,
-                        i.cidade AS instituicao_cidade
+                        i.cidade AS instituicao_cidade,
+                        f.usuario_id,
+                        u.foto_arquivo_id AS usuario_foto_id,
+                        f.arquivo_id
                     FROM formularios f
                     JOIN modalidades_formularios m ON m.id = f.modalidade_id
                     JOIN autores a ON a.id = f.autor_id
                     JOIN instituicoes i ON i.id = f.instituicao_id
+                    LEFT JOIN usuarios u ON u.id = f.usuario_id
                     WHERE f.id = %s
                     LIMIT 1;
                     """,
@@ -155,7 +174,13 @@ class Formulario:
         with get_connection() as conn:
             with conn.cursor() as cur:
                 cur.execute(
-                    "SELECT arquivo, titulo FROM formularios WHERE id = %s LIMIT 1;",
+                    """
+                    SELECT COALESCE(arq.dados, f.arquivo), f.titulo
+                    FROM formularios f
+                    LEFT JOIN arquivos arq ON arq.id = f.arquivo_id
+                    WHERE f.id = %s
+                    LIMIT 1;
+                    """,
                     (form_id,),
                 )
                 row = cur.fetchone()
@@ -170,6 +195,7 @@ class Formulario:
         dados_instituicao: dict,
         dados_form: dict,
         arquivo_bytes: bytes | None = None,
+        nome_arquivo: str = "trabalho.pdf",
     ) -> bool:
         autor_limpo = Autor.validar_dados(dados_autor)
         inst_limpa = Instituicao.validar_dados(dados_instituicao)
@@ -190,12 +216,19 @@ class Formulario:
                     inst_limpa["cidade"],
                 )
                 if arquivo_bytes is not None:
+                    arquivo_id = Arquivo.criar(
+                        cur,
+                        nome_arquivo or f"{form_limpo['titulo']}.pdf",
+                        "application/pdf",
+                        arquivo_bytes,
+                    )
                     cur.execute(
                         """
                         UPDATE formularios
                         SET autor_id = %s,
                             modalidade_id = %s,
                             instituicao_id = %s,
+                            arquivo_id = %s,
                             titulo = %s,
                             resumo = %s,
                             arquivo = %s,
@@ -207,6 +240,7 @@ class Formulario:
                             autor_id,
                             form_limpo["modalidade_id"],
                             instituicao_id,
+                            arquivo_id,
                             form_limpo["titulo"],
                             form_limpo["resumo"],
                             psycopg2.Binary(arquivo_bytes),
@@ -272,4 +306,7 @@ class Formulario:
             "campus": r[13],
             "instituicao_nome": r[13],
             "instituicao_cidade": r[14],
+            "usuario_id": r[15] if len(r) > 15 else None,
+            "usuario_foto_id": r[16] if len(r) > 16 else None,
+            "arquivo_id": r[17] if len(r) > 17 else None,
         }

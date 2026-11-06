@@ -6,6 +6,13 @@ from dotenv import load_dotenv
 load_dotenv()
 
 SCHEMA_SQL = """
+CREATE TABLE IF NOT EXISTS arquivos (
+    id SERIAL PRIMARY KEY,
+    nome VARCHAR(255) NOT NULL,
+    content_type VARCHAR(100) NOT NULL,
+    dados BYTEA NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS funcoes (
     id SERIAL PRIMARY KEY,
     descricao VARCHAR(255) NOT NULL
@@ -16,7 +23,8 @@ CREATE TABLE IF NOT EXISTS usuarios (
     funcao_id INTEGER NOT NULL REFERENCES funcoes(id),
     nome VARCHAR(100) NOT NULL,
     email VARCHAR(100) NOT NULL,
-    senha VARCHAR(20) NOT NULL
+    senha VARCHAR(20) NOT NULL,
+    foto_arquivo_id INTEGER REFERENCES arquivos(id) ON DELETE SET NULL
 );
 
 CREATE TABLE IF NOT EXISTS modalidades_formularios (
@@ -40,15 +48,22 @@ CREATE TABLE IF NOT EXISTS instituicoes (
 
 CREATE TABLE IF NOT EXISTS formularios (
     id SERIAL PRIMARY KEY,
+    usuario_id INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
     autor_id INTEGER NOT NULL REFERENCES autores(id),
     modalidade_id INTEGER NOT NULL REFERENCES modalidades_formularios(id),
     instituicao_id INTEGER NOT NULL REFERENCES instituicoes(id),
+    arquivo_id INTEGER REFERENCES arquivos(id) ON DELETE SET NULL,
     titulo VARCHAR(50) NOT NULL,
     resumo TEXT NOT NULL,
-    arquivo BYTEA NOT NULL,
+    arquivo BYTEA,
     palavra_chave VARCHAR(100) NOT NULL,
     area_conhecimento VARCHAR(255) NOT NULL
 );
+
+ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS foto_arquivo_id INTEGER REFERENCES arquivos(id) ON DELETE SET NULL;
+ALTER TABLE formularios ADD COLUMN IF NOT EXISTS usuario_id INTEGER REFERENCES usuarios(id) ON DELETE SET NULL;
+ALTER TABLE formularios ADD COLUMN IF NOT EXISTS arquivo_id INTEGER REFERENCES arquivos(id) ON DELETE SET NULL;
+ALTER TABLE formularios ALTER COLUMN arquivo DROP NOT NULL;
 """
 
 

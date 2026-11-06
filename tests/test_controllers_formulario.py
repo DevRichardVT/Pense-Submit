@@ -130,3 +130,71 @@ def test_submissao_erro_preserva_campos_autor_e_instituicao():
     assert resp.status_code == 400
     assert "Maria Silva" in html
     assert "IFRS - Campus Bento" in html
+
+
+def test_botao_sair_nao_exibe_nome_do_usuario_e_cards_usam_foto_do_usuario():
+    with patch("database.init_db"):
+        app = create_app(testing=True)
+    client = app.test_client()
+    with client.session_transaction() as sess:
+        sess["usuario_id"] = 2
+        sess["usuario_nome"] = "Fulano da Silva"
+        sess["usuario_funcao"] = "normal"
+        sess["usuario_foto_id"] = 45
+
+    with patch(
+        "controllers.formulario_controller.Formulario.listar_todos",
+        return_value=[
+            {
+                "id": 10,
+                "titulo": "Trabalho com Foto",
+                "resumo": "Resumo teste",
+                "palavra_chave": "ia",
+                "area_conhecimento": "Computação",
+                "modalidade_id": 1,
+                "modalidade": "Pesquisa",
+                "autor_id": 1,
+                "autor_nome": "Fulano da Silva",
+                "autor_email": "fulano@ifrs.edu.br",
+                "autor_area": "TI",
+                "autor_cidade": "Farroupilha",
+                "instituicao_id": 1,
+                "instituicao_nome": "IFRS",
+                "instituicao_cidade": "Farroupilha",
+                "usuario_id": 2,
+                "usuario_foto_id": 45,
+                "arquivo_id": 88,
+            }
+        ],
+    ):
+        resp = client.get("/")
+
+    html = resp.get_data(as_text=True)
+    assert resp.status_code == 200
+    assert "SAIR (Fulano da Silva)" not in html
+    assert ">SAIR<" in html
+    assert "/arquivos/45" in html
+
+
+def test_formulario_renderiza_wizard_de_tres_etapas():
+    with patch("database.init_db"):
+        app = create_app(testing=True)
+    client = app.test_client()
+    with client.session_transaction() as sess:
+        sess["usuario_id"] = 2
+        sess["usuario_nome"] = "Normal"
+        sess["usuario_funcao"] = "normal"
+
+    with patch(
+        "controllers.formulario_controller.Modalidade.listar_todas",
+        return_value=[{"id": 1, "descricao": "Pesquisa"}],
+    ):
+        resp = client.get("/formulario")
+
+    html = resp.get_data(as_text=True)
+    assert resp.status_code == 200
+    assert 'data-step="1"' in html
+    assert 'data-step="2"' in html
+    assert 'data-step="3"' in html
+    assert 'id="btn-proximo"' in html
+    assert 'id="btn-voltar"' in html

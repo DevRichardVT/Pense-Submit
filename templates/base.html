@@ -24,7 +24,14 @@
           <a href="{{ url_for('usuario.listar') }}"
              class="{{ 'ativo' if request.endpoint == 'usuario.listar' }}">USUÁRIOS</a>
         {% endif %}
-        <a href="{{ url_for('auth.logout') }}">SAIR ({{ session.get('usuario_nome') }})</a>
+        <a href="{{ url_for('auth.logout') }}">SAIR</a>
+        <div class="topo__perfil" title="{{ session.get('usuario_nome', '') }}">
+          <img
+            class="topo__avatar"
+            src="{{ url_for('formulario.ver_arquivo', id=session.get('usuario_foto_id')) if session.get('usuario_foto_id') else url_for('static', filename='img/gato1.jpg') }}"
+            alt="Foto de {{ session.get('usuario_nome', 'usuário') }}"
+          >
+        </div>
       {% else %}
         <a href="{{ url_for('auth.login') }}"
            class="{{ 'ativo' if request.endpoint == 'auth.login' }}">LOGIN</a>
@@ -47,5 +54,28 @@
   <footer class="rodape">
     <p>11ª Jornada Científica, Tecnológica e Cultural do IFRS</p>
   </footer>
+
+  <script>
+    document.addEventListener("submit", function (event) {
+      const form = event.target;
+      if (!(form instanceof HTMLFormElement)) return;
+      if (form.dataset.submitting === "true") {
+        event.preventDefault();
+        return;
+      }
+      if (typeof form.checkValidity === "function" && !form.checkValidity()) {
+        return;
+      }
+      form.dataset.submitting = "true";
+      const botoes = form.querySelectorAll('button[type="submit"], input[type="submit"]');
+      botoes.forEach(function (btn) {
+        btn.disabled = true;
+        if (btn.tagName === "BUTTON" && !btn.dataset.keepText) {
+          btn.dataset.originalText = btn.textContent;
+          btn.textContent = "ENVIANDO...";
+        }
+      });
+    });
+  </script>
 </body>
 </html>

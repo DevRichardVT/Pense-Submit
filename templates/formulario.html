@@ -10,194 +10,226 @@
     {{ 'Editar Submissão' if edicao else 'Formulário de Submissão' }}
   </h1>
 
-  <form method="POST" enctype="multipart/form-data">
-    <h2 class="formulario__secao">1. Dados do Autor</h2>
+  <ol class="wizard-passos" aria-label="Etapas do formulário">
+    <li class="wizard-passo ativo" data-step-indicator="1">
+      <span class="wizard-passo__numero">1</span>
+      <span class="wizard-passo__rotulo">Autores</span>
+    </li>
+    <li class="wizard-passo" data-step-indicator="2">
+      <span class="wizard-passo__numero">2</span>
+      <span class="wizard-passo__rotulo">Instituição</span>
+    </li>
+    <li class="wizard-passo" data-step-indicator="3">
+      <span class="wizard-passo__numero">3</span>
+      <span class="wizard-passo__rotulo">Informações</span>
+    </li>
+  </ol>
 
-    <div class="campo">
-      <label for="autor_nome">Nome do Autor:</label>
-      <div class="campo__entrada">
-        <input
-          type="text"
-          id="autor_nome"
-          name="autor_nome"
-          maxlength="100"
-          value="{{ form_atual.get('autor_nome', '') }}"
-          placeholder="Digite o nome do autor"
-          required
-        >
-      </div>
-    </div>
+  <p id="wizard-erro" class="aviso aviso--erro" role="alert" hidden></p>
 
-    <div class="campo">
-      <label for="autor_email">E-mail do Autor:</label>
-      <div class="campo__entrada">
-        <input
-          type="email"
-          id="autor_email"
-          name="autor_email"
-          maxlength="100"
-          value="{{ form_atual.get('autor_email', '') }}"
-          placeholder="Ex.: autor@ifrs.edu.br"
-          required
-        >
-      </div>
-    </div>
+  <form id="form-wizard" method="POST" enctype="multipart/form-data">
+    <!-- Etapa 1: Autores -->
+    <div class="wizard-etapa ativa" data-step="1">
+      <h2 class="formulario__secao">1. Dados do Autor</h2>
 
-    <div class="campo">
-      <label for="autor_area">Área de Atuação do Autor:</label>
-      <div class="campo__entrada">
-        <input
-          type="text"
-          id="autor_area"
-          name="autor_area"
-          maxlength="100"
-          value="{{ form_atual.get('autor_area', '') }}"
-          placeholder="Ex.: Ciência da Computação"
-          required
-        >
-      </div>
-    </div>
-
-    <div class="campo">
-      <label for="autor_cidade">Cidade do Autor:</label>
-      <div class="campo__entrada">
-        <input
-          type="text"
-          id="autor_cidade"
-          name="autor_cidade"
-          maxlength="100"
-          value="{{ form_atual.get('autor_cidade', '') }}"
-          placeholder="Ex.: Farroupilha"
-          required
-        >
-      </div>
-    </div>
-
-    <h2 class="formulario__secao">2. Dados da Instituição</h2>
-
-    <div class="campo">
-      <label for="instituicao_nome">Nome da Instituição / Campus:</label>
-      <div class="campo__entrada">
-        <input
-          type="text"
-          id="instituicao_nome"
-          name="instituicao_nome"
-          maxlength="255"
-          value="{{ form_atual.get('instituicao_nome', '') }}"
-          placeholder="Ex.: IFRS - Campus Farroupilha"
-          required
-        >
-      </div>
-    </div>
-
-    <div class="campo">
-      <label for="instituicao_cidade">Cidade da Instituição:</label>
-      <div class="campo__entrada">
-        <input
-          type="text"
-          id="instituicao_cidade"
-          name="instituicao_cidade"
-          maxlength="100"
-          value="{{ form_atual.get('instituicao_cidade', '') }}"
-          placeholder="Ex.: Farroupilha"
-          required
-        >
-      </div>
-    </div>
-
-    <h2 class="formulario__secao">3. Dados do Trabalho</h2>
-
-    <div class="campo">
-      <label for="titulo">Título do Trabalho (máx. 50 caracteres):</label>
-      <div class="campo__entrada">
-        <input
-          type="text"
-          id="titulo"
-          name="titulo"
-          maxlength="50"
-          value="{{ form_atual.get('titulo', '') }}"
-          placeholder="Digite o título do trabalho"
-          required
-        >
-      </div>
-    </div>
-
-    <div class="campo">
-      <label for="palavra_chave">Palavras-chave (máx. 100 caracteres):</label>
-      <div class="campo__entrada">
-        <input
-          type="text"
-          id="palavra_chave"
-          name="palavra_chave"
-          maxlength="100"
-          value="{{ form_atual.get('palavra_chave', '') }}"
-          placeholder="Ex.: educação, tecnologia, sustentabilidade"
-          required
-        >
-      </div>
-    </div>
-
-    <div class="campo">
-      <label for="area_conhecimento">Área do Conhecimento:</label>
-      <div class="campo__entrada">
-        <input
-          type="text"
-          id="area_conhecimento"
-          name="area_conhecimento"
-          maxlength="255"
-          value="{{ form_atual.get('area_conhecimento', '') }}"
-          placeholder="Ex.: Ciências Exatas e da Terra"
-          required
-        >
-      </div>
-    </div>
-
-    <div class="campo">
-      <label for="resumo">Resumo:</label>
-      <div class="campo__entrada campo__entrada--area">
-        <textarea
-          id="resumo"
-          name="resumo"
-          placeholder="Digite o resumo do trabalho"
-          required
-        >{{ form_atual.get('resumo', '') }}</textarea>
-      </div>
-    </div>
-
-    <fieldset class="modalidade">
-      <legend>Modalidade:</legend>
-      {% for mod in modalidades %}
-        <label class="modalidade__opcao">
+      <div class="campo">
+        <label for="autor_nome">Nome do Autor:</label>
+        <div class="campo__entrada">
           <input
-            type="radio"
-            name="modalidade_id"
-            value="{{ mod.id }}"
-            {% if (form_atual.get('modalidade_id') | string) == (mod.id | string) %}checked{% endif %}
+            type="text"
+            id="autor_nome"
+            name="autor_nome"
+            maxlength="100"
+            value="{{ form_atual.get('autor_nome', '') }}"
+            placeholder="Digite o nome do autor"
             required
           >
-          {{ mod.descricao }}
-        </label>
-      {% endfor %}
-    </fieldset>
+        </div>
+      </div>
 
-    <div class="arquivo">
-      <label for="arquivo" class="botao-arquivo">
-        {{ 'Substituir PDF (opcional)' if edicao else 'Adicionar arquivo PDF' }}
-      </label>
-      <input
-        type="file"
-        id="arquivo"
-        name="arquivo"
-        accept=".pdf"
-        {% if not edicao %}required{% endif %}
-      >
-      <span id="nome-arquivo">
-        {{ 'Arquivo atual mantido caso nenhum novo seja selecionado' if edicao else 'Nenhum arquivo selecionado' }}
-      </span>
+      <div class="campo">
+        <label for="autor_email">E-mail do Autor:</label>
+        <div class="campo__entrada">
+          <input
+            type="email"
+            id="autor_email"
+            name="autor_email"
+            maxlength="100"
+            value="{{ form_atual.get('autor_email', '') }}"
+            placeholder="Ex.: autor@ifrs.edu.br"
+            required
+          >
+        </div>
+      </div>
+
+      <div class="campo">
+        <label for="autor_area">Área de Atuação do Autor:</label>
+        <div class="campo__entrada">
+          <input
+            type="text"
+            id="autor_area"
+            name="autor_area"
+            maxlength="100"
+            value="{{ form_atual.get('autor_area', '') }}"
+            placeholder="Ex.: Ciência da Computação"
+            required
+          >
+        </div>
+      </div>
+
+      <div class="campo">
+        <label for="autor_cidade">Cidade do Autor:</label>
+        <div class="campo__entrada">
+          <input
+            type="text"
+            id="autor_cidade"
+            name="autor_cidade"
+            maxlength="100"
+            value="{{ form_atual.get('autor_cidade', '') }}"
+            placeholder="Ex.: Farroupilha"
+            required
+          >
+        </div>
+      </div>
     </div>
 
-    <div class="formulario__acoes">
-      <button type="submit" class="botao botao--principal">
+    <!-- Etapa 2: Instituição -->
+    <div class="wizard-etapa" data-step="2" hidden>
+      <h2 class="formulario__secao">2. Dados da Instituição</h2>
+
+      <div class="campo">
+        <label for="instituicao_nome">Nome da Instituição / Campus:</label>
+        <div class="campo__entrada">
+          <input
+            type="text"
+            id="instituicao_nome"
+            name="instituicao_nome"
+            maxlength="255"
+            value="{{ form_atual.get('instituicao_nome', '') }}"
+            placeholder="Ex.: IFRS - Campus Farroupilha"
+            required
+          >
+        </div>
+      </div>
+
+      <div class="campo">
+        <label for="instituicao_cidade">Cidade da Instituição:</label>
+        <div class="campo__entrada">
+          <input
+            type="text"
+            id="instituicao_cidade"
+            name="instituicao_cidade"
+            maxlength="100"
+            value="{{ form_atual.get('instituicao_cidade', '') }}"
+            placeholder="Ex.: Farroupilha"
+            required
+          >
+        </div>
+      </div>
+    </div>
+
+    <!-- Etapa 3: Informações do Trabalho -->
+    <div class="wizard-etapa" data-step="3" hidden>
+      <h2 class="formulario__secao">3. Informações do Trabalho</h2>
+
+      <div class="campo">
+        <label for="titulo">Título do Trabalho (máx. 50 caracteres):</label>
+        <div class="campo__entrada">
+          <input
+            type="text"
+            id="titulo"
+            name="titulo"
+            maxlength="50"
+            value="{{ form_atual.get('titulo', '') }}"
+            placeholder="Digite o título do trabalho"
+            required
+          >
+        </div>
+      </div>
+
+      <div class="campo">
+        <label for="palavra_chave">Palavras-chave (máx. 100 caracteres):</label>
+        <div class="campo__entrada">
+          <input
+            type="text"
+            id="palavra_chave"
+            name="palavra_chave"
+            maxlength="100"
+            value="{{ form_atual.get('palavra_chave', '') }}"
+            placeholder="Ex.: educação, tecnologia, sustentabilidade"
+            required
+          >
+        </div>
+      </div>
+
+      <div class="campo">
+        <label for="area_conhecimento">Área do Conhecimento:</label>
+        <div class="campo__entrada">
+          <input
+            type="text"
+            id="area_conhecimento"
+            name="area_conhecimento"
+            maxlength="255"
+            value="{{ form_atual.get('area_conhecimento', '') }}"
+            placeholder="Ex.: Ciências Exatas e da Terra"
+            required
+          >
+        </div>
+      </div>
+
+      <div class="campo">
+        <label for="resumo">Resumo:</label>
+        <div class="campo__entrada campo__entrada--area">
+          <textarea
+            id="resumo"
+            name="resumo"
+            placeholder="Digite o resumo do trabalho"
+            required
+          >{{ form_atual.get('resumo', '') }}</textarea>
+        </div>
+      </div>
+
+      <fieldset class="modalidade">
+        <legend>Modalidade:</legend>
+        {% for mod in modalidades %}
+          <label class="modalidade__opcao">
+            <input
+              type="radio"
+              name="modalidade_id"
+              value="{{ mod.id }}"
+              {% if (form_atual.get('modalidade_id') | string) == (mod.id | string) %}checked{% endif %}
+              required
+            >
+            {{ mod.descricao }}
+          </label>
+        {% endfor %}
+      </fieldset>
+
+      <div class="arquivo">
+        <label for="arquivo" class="botao-arquivo">
+          {{ 'Substituir PDF (opcional)' if edicao else 'Adicionar arquivo PDF' }}
+        </label>
+        <input
+          type="file"
+          id="arquivo"
+          name="arquivo"
+          accept=".pdf"
+          {% if not edicao %}required{% endif %}
+        >
+        <span id="nome-arquivo">
+          {{ 'Arquivo atual mantido caso nenhum novo seja selecionado' if edicao else 'Nenhum arquivo selecionado' }}
+        </span>
+      </div>
+    </div>
+
+    <div class="formulario__acoes wizard-acoes">
+      <button type="button" id="btn-voltar" class="botao botao--secundario" hidden>
+        VOLTAR
+      </button>
+      <button type="button" id="btn-proximo" class="botao botao--principal">
+        PRÓXIMO
+      </button>
+      <button type="submit" id="btn-enviar" class="botao botao--principal" hidden>
         {{ 'SALVAR ALTERAÇÕES' if edicao else 'ENVIAR' }}
       </button>
     </div>
@@ -205,15 +237,132 @@
 </section>
 
 <script>
-  const arquivo = document.getElementById("arquivo");
-  const nomeArquivo = document.getElementById("nome-arquivo");
+  (function () {
+    const form = document.getElementById("form-wizard");
+    const etapas = Array.from(document.querySelectorAll(".wizard-etapa"));
+    const indicadores = Array.from(document.querySelectorAll(".wizard-passo"));
+    const btnVoltar = document.getElementById("btn-voltar");
+    const btnProximo = document.getElementById("btn-proximo");
+    const btnEnviar = document.getElementById("btn-enviar");
+    const msgErro = document.getElementById("wizard-erro");
+    const arquivo = document.getElementById("arquivo");
+    const nomeArquivo = document.getElementById("nome-arquivo");
 
-  arquivo.addEventListener("change", function () {
-    if (arquivo.files.length > 0) {
-      nomeArquivo.textContent = arquivo.files[0].name;
-    } else {
-      nomeArquivo.textContent = "Nenhum arquivo selecionado";
+    let etapaAtual = 1;
+    const totalEtapas = etapas.length;
+
+    if (arquivo) {
+      arquivo.addEventListener("change", function () {
+        if (arquivo.files && arquivo.files.length > 0) {
+          nomeArquivo.textContent = arquivo.files[0].name;
+          esconderErro();
+        } else {
+          nomeArquivo.textContent = "Nenhum arquivo selecionado";
+        }
+      });
     }
-  });
+
+    function mostrarErro(texto) {
+      if (!msgErro) return;
+      msgErro.textContent = texto;
+      msgErro.hidden = false;
+    }
+
+    function esconderErro() {
+      if (!msgErro) return;
+      msgErro.textContent = "";
+      msgErro.hidden = true;
+    }
+
+    function validarEtapa(numeroEtapa) {
+      const container = etapas.find(function (el) {
+        return Number(el.dataset.step) === numeroEtapa;
+      });
+      if (!container) return true;
+
+      const campos = Array.from(
+        container.querySelectorAll("input, textarea, select")
+      );
+
+      for (const campo of campos) {
+        if (campo.type === "file") {
+          if (campo.required && (!campo.files || campo.files.length === 0)) {
+            mostrarErro("Por favor, selecione o arquivo PDF antes de enviar.");
+            return false;
+          }
+          continue;
+        }
+
+        if (typeof campo.value === "string" && campo.type !== "radio") {
+          campo.value = campo.value.trim();
+        }
+
+        if (!campo.checkValidity()) {
+          mostrarErro("Preencha corretamente todos os campos obrigatórios desta etapa antes de avançar.");
+          if (typeof campo.reportValidity === "function") {
+            campo.reportValidity();
+          }
+          campo.focus();
+          return false;
+        }
+      }
+
+      esconderErro();
+      return true;
+    }
+
+    function atualizarInterface() {
+      etapas.forEach(function (el) {
+        const passo = Number(el.dataset.step);
+        const ativa = passo === etapaAtual;
+        el.hidden = !ativa;
+        el.classList.toggle("ativa", ativa);
+      });
+
+      indicadores.forEach(function (ind) {
+        const passo = Number(ind.dataset.stepIndicator);
+        ind.classList.toggle("ativo", passo === etapaAtual);
+        ind.classList.toggle("concluido", passo < etapaAtual);
+      });
+
+      btnVoltar.hidden = etapaAtual === 1;
+      btnProximo.hidden = etapaAtual === totalEtapas;
+      btnEnviar.hidden = etapaAtual !== totalEtapas;
+    }
+
+    btnProximo.addEventListener("click", function () {
+      if (!validarEtapa(etapaAtual)) {
+        return;
+      }
+      if (etapaAtual < totalEtapas) {
+        etapaAtual += 1;
+        atualizarInterface();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    });
+
+    btnVoltar.addEventListener("click", function () {
+      esconderErro();
+      if (etapaAtual > 1) {
+        etapaAtual -= 1;
+        atualizarInterface();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    });
+
+    form.addEventListener("submit", function (event) {
+      for (let i = 1; i <= totalEtapas; i++) {
+        if (!validarEtapa(i)) {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          etapaAtual = i;
+          atualizarInterface();
+          return;
+        }
+      }
+    });
+
+    atualizarInterface();
+  })();
 </script>
 {% endblock %}

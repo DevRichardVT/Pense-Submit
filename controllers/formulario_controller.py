@@ -7,17 +7,19 @@ from flask import (
     render_template,
     request,
     send_file,
+    session,
     url_for,
 )
 from werkzeug.utils import secure_filename
 from controllers.decorators import admin_required, login_required
+from models.arquivo import Arquivo
 from models.formulario import Formulario
 from models.modalidade import Modalidade
 
 formulario_bp = Blueprint("formulario", __name__)
 
 
-def _ler_pdf_enviado(arquivo, obrigatorio: bool = True) -> bytes | None:
+def _ler_pdf_enviado(arquivo, obrigatorio: bool = True) -> tuple[bytes, str] | None:
     if not arquivo or not arquivo.filename:
         if obrigatorio:
             raise ValueError("O envio do arquivo PDF é obrigatório.")
@@ -30,7 +32,7 @@ def _ler_pdf_enviado(arquivo, obrigatorio: bool = True) -> bytes | None:
     conteudo = arquivo.read()
     if not conteudo:
         raise ValueError("O arquivo PDF enviado está vazio.")
-    return conteudo
+    return conteudo, nome_seguro
 
 
 def _extrair_dados_requisicao(req):
@@ -107,12 +109,15 @@ def criar():
             )
 
         try:
-            arquivo_bytes = _ler_pdf_enviado(request.files.get("arquivo"), obrigatorio=True)
+            pdf_info = _ler_pdf_enviado(request.files.get("arquivo"), obrigatorio=True)
+            arquivo_bytes, nome_pdf = pdf_info
             Formulario.criar(
                 dados_autor=dados_autor,
                 dados_instituicao=dados_instituicao,
                 dados_form=dados_form,
                 arquivo_bytes=arquivo_bytes,
+                nome_arquivo=nome_pdf,
+                usuario_id=session.get("usuario_id"),
             )
         except ValueError as erro:
             flash(str(erro))
@@ -143,6 +148,20 @@ def detalhe(id: int):
     if not trabalho:
         abort(404)
     return render_template("detalhe.html", t=trabalho)
+
+
+@formulario_bp.route("/arquivos/<int:id>")
+@login_required
+def ver_arquivo(id: int):
+    arq = Arquivo.buscar_por_id(id)
+    if not arq:
+        abort(404)
+    return send_file(
+        io.BytesIO(arq["dados"]),
+        mimetype=arq["content_type"],
+        as_attachment=False,
+        download_name=arq["nome"],
+    )
 
 
 @formulario_bp.route("/trabalho/<int:id>/arquivo")
@@ -193,15 +212,18 @@ def editar(id: int):
             )
 
         try:
-            arquivo_bytes = _ler_pdf_enviado(
+            pdf_info = _ler_pdf_enviado(
                 request.files.get("arquivo"), obrigatorio=False
             )
+            arquivo_bytes = pdf_info[0] if pdf_info else None
+            nome_pdf = pdf_info[1] if pdf_info else "trabalho.pdf"
             Formulario.atualizar(
                 form_id=id,
                 dados_autor=dados_autor,
                 dados_instituicao=dados_instituicao,
                 dados_form=dados_form,
                 arquivo_bytes=arquivo_bytes,
+                nome_arquivo=nome_pdf,
             )
         except ValueError as erro:
             flash(str(erro))

@@ -9,16 +9,20 @@ class Usuario:
             with conn.cursor() as cur:
                 cur.execute(
                     """
-                    SELECT u.id, u.nome, u.email, u.funcao_id, f.descricao, u.foto_arquivo_id
+                    SELECT u.id, u.nome, u.email, u.funcao_id, f.descricao, u.foto_arquivo_id, COALESCE(u.ativo, TRUE)
                     FROM usuarios u
                     JOIN funcoes f ON f.id = u.funcao_id
-                    WHERE LOWER(u.email) = LOWER(%s) AND u.senha = %s
+                    WHERE LOWER(u.email) = LOWER(%s)
+                      AND u.senha = %s
+                      AND COALESCE(u.ativo, TRUE) = TRUE
                     LIMIT 1;
                     """,
                     (email.strip(), senha),
                 )
                 row = cur.fetchone()
                 if not row:
+                    return None
+                if len(row) > 6 and not row[6]:
                     return None
                 return {
                     "id": row[0],
@@ -48,10 +52,22 @@ class Usuario:
         with get_connection() as conn:
             with conn.cursor() as cur:
                 cur.execute(
-                    "SELECT id FROM usuarios WHERE LOWER(email) = LOWER(%s) LIMIT 1;",
-                    (email,),
+                    """
+                    SELECT nome, email
+                    FROM usuarios
+                    WHERE LOWER(email) = LOWER(%s) OR LOWER(nome) = LOWER(%s)
+                    LIMIT 1;
+                    """,
+                    (email, nome),
                 )
-                if cur.fetchone():
+                dup = cur.fetchone()
+                if dup:
+                    if (
+                        len(dup) >= 2
+                        and str(dup[0]).strip().lower() == nome.lower()
+                        and str(dup[1]).strip().lower() != email.lower()
+                    ):
+                        raise ValueError("Nome de usuário já cadastrado.")
                     raise ValueError("E-mail já cadastrado.")
 
                 cur.execute(
@@ -75,8 +91,8 @@ class Usuario:
 
                 cur.execute(
                     """
-                    INSERT INTO usuarios (funcao_id, nome, email, senha, foto_arquivo_id)
-                    VALUES (%s, %s, %s, %s, %s)
+                    INSERT INTO usuarios (funcao_id, nome, email, senha, foto_arquivo_id, ativo)
+                    VALUES (%s, %s, %s, %s, %s, TRUE)
                     RETURNING id;
                     """,
                     (funcao_id, nome, email, senha, foto_arquivo_id),
@@ -91,7 +107,7 @@ class Usuario:
             with conn.cursor() as cur:
                 cur.execute(
                     """
-                    SELECT u.id, u.nome, u.email, u.funcao_id, f.descricao, u.foto_arquivo_id
+                    SELECT u.id, u.nome, u.email, u.funcao_id, f.descricao, u.foto_arquivo_id, COALESCE(u.ativo, TRUE)
                     FROM usuarios u
                     JOIN funcoes f ON f.id = u.funcao_id
                     ORDER BY u.id ASC;
@@ -105,9 +121,96 @@ class Usuario:
                         "funcao_id": r[3],
                         "funcao": r[4],
                         "foto_arquivo_id": r[5] if len(r) > 5 else None,
+                        "ativo": bool(r[6]) if len(r) > 6 else True,
                     }
                     for r in cur.fetchall()
                 ]
+
+    @staticmethod
+    def buscar_por_id(usuario_id: int) -> dict | None:
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT u.id, u.nome, u.email, u.funcao_id, f.descricao, u.foto_arquivo_id, COALESCE(u.ativo, TRUE)
+                    FROM usuarios u
+                    JOIN funcoes f ON f.id = u.funcao_id
+                    WHERE u.id = %s
+                    LIMIT 1;
+                    """,
+                    (usuario_id,),
+                )
+                r = cur.fetchone()
+                if not r:
+                    return None
+                return {
+                    "id": r[0],
+                    "nome": r[1],
+                    "email": r[2],
+                    "funcao_id": r[3],
+                    "funcao": r[4],
+                    "foto_arquivo_id": r[5] if len(r) > 5 else None,
+                    "ativo": bool(r[6]) if len(r) > 6 else True,
+                }
+
+    @staticmethod
+    def atualizar_perfil(
+        usuario_id: int,
+        nome: str,
+        foto: tuple[str, str, bytes] | None = None,
+    ) -> dict:
+        nome = (nome or "").strip()
+        if not nome:
+            raise ValueError("O nome do usuário é obrigatório.")
+        if len(nome) > 100:
+            raise ValueError("O nome deve ter no máximo 100 caracteres.")
+
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT id FROM usuarios
+                    WHERE LOWER(nome) = LOWER(%s) AND id <> %s
+                    LIMIT 1;
+                    """,
+                    (nome, usuario_id),
+                )
+                if cur.fetchone():
+                    raise ValueError("Nome de usuário já cadastrado.")
+
+                if foto is not None:
+                    nome_foto, content_type, dados_foto = foto
+                    foto_arquivo_id = Arquivo.criar(
+                        cur, nome_foto, content_type, dados_foto
+                    )
+                    cur.execute(
+                        """
+                        UPDATE usuarios
+                        SET nome = %s, foto_arquivo_id = %s
+                        WHERE id = %s
+                        RETURNING id, nome, foto_arquivo_id;
+                        """,
+                        (nome, foto_arquivo_id, usuario_id),
+                    )
+                else:
+                    cur.execute(
+                        """
+                        UPDATE usuarios
+                        SET nome = %s
+                        WHERE id = %s
+                        RETURNING id, nome, foto_arquivo_id;
+                        """,
+                        (nome, usuario_id),
+                    )
+                row = cur.fetchone()
+                if not row:
+                    raise ValueError("Usuário não encontrado.")
+            conn.commit()
+            return {
+                "id": row[0],
+                "nome": row[1],
+                "foto_arquivo_id": row[2],
+            }
 
     @staticmethod
     def atualizar_funcao(usuario_id: int, nova_funcao_descricao: str) -> bool:
@@ -124,6 +227,18 @@ class Usuario:
                 cur.execute(
                     "UPDATE usuarios SET funcao_id = %s WHERE id = %s;",
                     (funcao_row[0], usuario_id),
+                )
+                atualizado = cur.rowcount > 0
+            conn.commit()
+            return atualizado
+
+    @staticmethod
+    def definir_ativo(usuario_id: int, ativo: bool) -> bool:
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "UPDATE usuarios SET ativo = %s WHERE id = %s;",
+                    (bool(ativo), usuario_id),
                 )
                 atualizado = cur.rowcount > 0
             conn.commit()

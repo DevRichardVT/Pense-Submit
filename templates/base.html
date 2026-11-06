@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Serif:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
   <header class="topo">
@@ -25,13 +26,18 @@
              class="{{ 'ativo' if request.endpoint == 'usuario.listar' }}">USUÁRIOS</a>
         {% endif %}
         <a href="{{ url_for('auth.logout') }}">SAIR</a>
-        <div class="topo__perfil" title="{{ session.get('usuario_nome', '') }}">
+        <a
+          href="{{ url_for('usuario.meu_perfil') }}"
+          class="topo__perfil"
+          title="Editar perfil ({{ session.get('usuario_nome', '') }})"
+          aria-label="Editar perfil"
+        >
           <img
             class="topo__avatar"
             src="{{ url_for('formulario.ver_arquivo', id=session.get('usuario_foto_id')) if session.get('usuario_foto_id') else url_for('static', filename='img/gato1.jpg') }}"
             alt="Foto de {{ session.get('usuario_nome', 'usuário') }}"
           >
-        </div>
+        </a>
       {% else %}
         <a href="{{ url_for('auth.login') }}"
            class="{{ 'ativo' if request.endpoint == 'auth.login' }}">LOGIN</a>
@@ -44,7 +50,7 @@
   <main class="conteudo">
     {% with mensagens = get_flashed_messages() %}
       {% for m in mensagens %}
-        <p class="aviso" role="status">{{ m }}</p>
+        <p class="aviso" role="status" data-flash-msg="{{ m }}">{{ m }}</p>
       {% endfor %}
     {% endwith %}
 
@@ -56,26 +62,90 @@
   </footer>
 
   <script>
-    document.addEventListener("submit", function (event) {
-      const form = event.target;
-      if (!(form instanceof HTMLFormElement)) return;
-      if (form.dataset.submitting === "true") {
+    (function () {
+      const avisos = Array.from(document.querySelectorAll("[data-flash-msg]"));
+      if (avisos.length > 0 && typeof Swal !== "undefined") {
+        const texto = avisos.map(function (el) { return el.dataset.flashMsg; }).join("\n");
+        const ehErro = /inválid|erro|obrigatóri|já cadastrado|muito grande|inativ|não pode|máximo/i.test(texto);
+        Swal.fire({
+          title: ehErro ? "Atenção" : "Sucesso",
+          text: texto,
+          icon: ehErro ? "warning" : "success",
+          confirmButtonColor: "#005c22",
+        });
+      }
+
+      document.addEventListener("click", function (event) {
+        const link = event.target.closest("a[data-confirm-link]");
+        if (!link || typeof Swal === "undefined") return;
         event.preventDefault();
-        return;
-      }
-      if (typeof form.checkValidity === "function" && !form.checkValidity()) {
-        return;
-      }
-      form.dataset.submitting = "true";
-      const botoes = form.querySelectorAll('button[type="submit"], input[type="submit"]');
-      botoes.forEach(function (btn) {
-        btn.disabled = true;
-        if (btn.tagName === "BUTTON" && !btn.dataset.keepText) {
-          btn.dataset.originalText = btn.textContent;
-          btn.textContent = "ENVIANDO...";
-        }
+        const destino = link.getAttribute("href");
+        Swal.fire({
+          title: link.dataset.confirmTitle || "Editar registro?",
+          text: link.dataset.confirmLink,
+          icon: "question",
+          showCancelButton: true,
+          confirmButtonColor: "#005c22",
+          cancelButtonColor: "#666",
+          confirmButtonText: "Sim, editar",
+          cancelButtonText: "Cancelar",
+        }).then(function (res) {
+          if (res.isConfirmed && destino) {
+            window.location.href = destino;
+          }
+        });
       });
-    });
+
+      document.addEventListener("submit", function (event) {
+        const form = event.target;
+        if (!(form instanceof HTMLFormElement)) return;
+        if (event.defaultPrevented) return;
+
+        if (form.dataset.submitting === "true") {
+          event.preventDefault();
+          return;
+        }
+        if (typeof form.checkValidity === "function" && !form.checkValidity()) {
+          return;
+        }
+
+        if (form.dataset.confirmTitle && form.dataset.confirmed !== "true" && typeof Swal !== "undefined") {
+          event.preventDefault();
+          const icone = form.dataset.confirmIcon || "warning";
+          const corBtn = icone === "warning" ? "#b42318" : "#005c22";
+          Swal.fire({
+            title: form.dataset.confirmTitle,
+            text: form.dataset.confirmText || "",
+            icon: icone,
+            showCancelButton: true,
+            confirmButtonColor: corBtn,
+            cancelButtonColor: "#666",
+            confirmButtonText: form.dataset.confirmBtn || "Confirmar",
+            cancelButtonText: "Cancelar",
+          }).then(function (res) {
+            if (res.isConfirmed) {
+              form.dataset.confirmed = "true";
+              if (typeof form.requestSubmit === "function") {
+                form.requestSubmit();
+              } else {
+                form.submit();
+              }
+            }
+          });
+          return;
+        }
+
+        form.dataset.submitting = "true";
+        const botoes = form.querySelectorAll('button[type="submit"], input[type="submit"]');
+        botoes.forEach(function (btn) {
+          btn.disabled = true;
+          if (btn.tagName === "BUTTON" && !btn.dataset.keepText) {
+            btn.dataset.originalText = btn.textContent;
+            btn.textContent = "ENVIANDO...";
+          }
+        });
+      });
+    })();
   </script>
 </body>
 </html>

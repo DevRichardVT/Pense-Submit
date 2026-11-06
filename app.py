@@ -8,7 +8,7 @@ from controllers import auth_bp, formulario_bp, usuario_bp
 def create_app(testing: bool = False) -> Flask:
     flask_app = Flask(__name__)
     flask_app.secret_key = os.environ.get("SECRET_KEY", "troque-esta-chave")
-    flask_app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024
+    flask_app.config["MAX_CONTENT_LENGTH"] = 25 * 1024 * 1024
     flask_app.config["TESTING"] = testing
 
     if not testing:
@@ -23,7 +23,7 @@ def create_app(testing: bool = False) -> Flask:
 
     @flask_app.errorhandler(413)
     def arquivo_grande(_erro):
-        flash("Arquivo muito grande (máximo de 10 MB).")
+        flash("Arquivo muito grande (máximo de 10 MB por arquivo).")
         return redirect(url_for("formulario.criar"))
 
     return flask_app

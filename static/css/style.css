@@ -71,10 +71,18 @@ a:focus-visible, button:focus-visible {
   color: var(--branco);
 }
 
-.topo__perfil {
+.topo__menu a.topo__perfil {
   display: flex;
   align-items: center;
   flex: none;
+  min-width: 0;
+  padding: 0;
+  background: transparent;
+  border-radius: 50%;
+}
+.topo__menu a.topo__perfil:hover {
+  background: transparent;
+  transform: scale(1.06);
 }
 .topo__avatar {
   width: 48px;
@@ -135,6 +143,7 @@ a:focus-visible, button:focus-visible {
   gap: 2rem 1.5rem;
 }
 .card {
+  position: relative;
   display: flex;
   flex-direction: column;
   background: var(--branco);
@@ -142,6 +151,55 @@ a:focus-visible, button:focus-visible {
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
   overflow: hidden;
   padding-bottom: 1.25rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+}
+.card__link-visualizar {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  color: inherit;
+  text-decoration: none;
+}
+.card__acoes-topo {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.6rem;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.card__midia {
+  position: relative;
+  overflow: hidden;
+}
+.card__hover-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 92, 34, 0.82);
+  color: var(--branco);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.98rem;
+  text-align: center;
+  padding: 0.75rem;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.card:hover .card__hover-overlay,
+.card__link-visualizar:focus-visible .card__hover-overlay {
+  opacity: 1;
+}
+.card:hover .card__resumo,
+.card__link-visualizar:focus-visible .card__resumo {
+  -webkit-line-clamp: unset;
+  display: block;
 }
 .card__topo {
   display: flex;
@@ -579,6 +637,97 @@ button:disabled {
   padding: 0.25rem 0.75rem;
   border-radius: 999px;
   font-size: 0.85rem;
+}
+.badge-status {
+  display: inline-block;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+.badge-status--ativo {
+  background: #dfecc3;
+  color: var(--verde-escuro);
+}
+.badge-status--inativo {
+  background: #fde8e8;
+  color: #b42318;
+}
+.linha-inativa {
+  opacity: 0.68;
+}
+.usuario-celula {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+.tabela__avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--verde-claro);
+  flex: none;
+}
+.tabela__acoes {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.botao-icone {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  background: var(--branco);
+  color: var(--texto);
+  cursor: pointer;
+  padding: 0;
+  text-decoration: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
+}
+.botao-icone--editar {
+  color: var(--verde-escuro);
+  border-color: var(--verde-escuro);
+}
+.botao-icone--editar:hover {
+  background: var(--verde-escuro);
+  color: var(--branco);
+}
+.botao-icone--perigo {
+  color: #b42318;
+  border-color: #b42318;
+}
+.botao-icone--perigo:hover {
+  background: #b42318;
+  color: var(--branco);
+}
+.detalhe__topo-texto {
+  flex: 1;
+  min-width: 0;
+}
+.detalhe__acoes-topo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+.detalhe__capa {
+  width: 100%;
+  max-height: 320px;
+  object-fit: cover;
+  border-radius: var(--raio);
+  margin: 0.5rem 0 1rem;
+}
+#nome-imagem {
+  font-size: 0.9rem;
+  color: #222;
+  overflow-wrap: anywhere;
 }
 
 /* ---------- Responsivo ---------- */

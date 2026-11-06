@@ -141,3 +141,68 @@ def test_admin_pode_promover_usuario_normal():
 
     assert resp.status_code == 302
     mock_update.assert_called_once_with(2, "Admin")
+
+
+def test_usuario_pode_editar_proprio_perfil_nome_e_foto():
+    with patch("database.init_db"):
+        app = create_app(testing=True)
+    client = app.test_client()
+    with client.session_transaction() as sess:
+        sess["usuario_id"] = 5
+        sess["usuario_nome"] = "Antigo"
+        sess["usuario_funcao"] = "normal"
+
+    with patch(
+        "controllers.usuario_controller.Usuario.buscar_por_id",
+        return_value={
+            "id": 5,
+            "nome": "Antigo",
+            "email": "u@ifrs.edu.br",
+            "funcao_id": 2,
+            "funcao": "normal",
+            "foto_arquivo_id": None,
+            "ativo": True,
+        },
+    ), patch(
+        "controllers.usuario_controller.Usuario.atualizar_perfil",
+        return_value={"id": 5, "nome": "Novo Nome", "foto_arquivo_id": 88},
+    ) as mock_edit:
+        resp = client.post(
+            "/perfil",
+            data={
+                "nome": "Novo Nome",
+                "foto": (io.BytesIO(b"\x89PNG..."), "nova.png"),
+            },
+            content_type="multipart/form-data",
+            follow_redirects=False,
+        )
+
+    assert resp.status_code == 302
+    mock_edit.assert_called_once()
+    with client.session_transaction() as sess:
+        assert sess["usuario_nome"] == "Novo Nome"
+        assert sess["usuario_foto_id"] == 88
+
+
+def test_admin_pode_inativar_usuario_mas_nao_a_si_mesmo():
+    with patch("database.init_db"):
+        app = create_app(testing=True)
+    client = app.test_client()
+    with client.session_transaction() as sess:
+        sess["usuario_id"] = 1
+        sess["usuario_nome"] = "Admin"
+        sess["usuario_funcao"] = "Admin"
+
+    with patch(
+        "controllers.usuario_controller.Usuario.definir_ativo", return_value=True
+    ) as mock_inativar:
+        resp_outro = client.post(
+            "/usuarios/2/inativar", data={"ativo": "0"}, follow_redirects=False
+        )
+        resp_proprio = client.post(
+            "/usuarios/1/inativar", data={"ativo": "0"}, follow_redirects=False
+        )
+
+    assert resp_outro.status_code == 302
+    assert resp_proprio.status_code == 302
+    mock_inativar.assert_called_once_with(2, False)

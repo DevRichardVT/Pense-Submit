@@ -4,6 +4,8 @@ from models.usuario import Usuario
 
 auth_bp = Blueprint("auth", __name__)
 
+MAX_TAMANHO_ARQUIVO = 10 * 1024 * 1024
+
 EXTENSOES_IMAGEM = {
     ".png": "image/png",
     ".jpg": "image/jpeg",
@@ -30,6 +32,8 @@ def _ler_foto_opcional(arquivo_foto) -> tuple[str, str, bytes] | None:
     dados = arquivo_foto.read()
     if not dados:
         raise ValueError("O arquivo de imagem enviado está vazio.")
+    if len(dados) > MAX_TAMANHO_ARQUIVO:
+        raise ValueError("A imagem deve ter no máximo 10 MB.")
 
     return nome_seguro, EXTENSOES_IMAGEM[ext], dados
 
@@ -49,7 +53,7 @@ def login():
 
         usuario = Usuario.autenticar(email, senha)
         if not usuario:
-            flash("E-mail ou senha inválidos.")
+            flash("E-mail ou senha inválidos, ou conta inativa.")
             return render_template("login.html"), 401
 
         session.clear()

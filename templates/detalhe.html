@@ -6,11 +6,52 @@
 <article class="detalhe">
   <header class="detalhe__topo">
     <img class="detalhe__avatar" src="{{ foto_url }}" alt="Avatar de {{ t.autor_nome }}">
-    <div>
+    <div class="detalhe__topo-texto">
       <h1>{{ t.titulo }}</h1>
       <p class="detalhe__meta">{{ t.modalidade }} — {{ t.autor_nome }} ({{ t.instituicao_nome }})</p>
     </div>
+    {% if session.get('usuario_funcao') | lower == 'admin' %}
+      <div class="detalhe__acoes-topo">
+        <a
+          class="botao-icone botao-icone--editar"
+          href="{{ url_for('formulario.editar', id=t.id) }}"
+          title="Editar trabalho"
+          aria-label="Editar {{ t.titulo }}"
+          data-confirm-title="Editar trabalho?"
+          data-confirm-link="Deseja abrir a edição deste formulário?"
+        >
+          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+            <path d="M18.37 2.63a2.12 2.12 0 0 1 3 3L14 13l-4 1 1-4 7.37-7.37zM11 6H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </a>
+        <form
+          method="POST"
+          action="{{ url_for('formulario.excluir', id=t.id) }}"
+          class="form-inline"
+          data-confirm-title="Excluir formulário?"
+          data-confirm-text="Deseja realmente excluir este formulário?"
+          data-confirm-icon="warning"
+          data-confirm-btn="Sim, excluir"
+        >
+          <button
+            type="submit"
+            class="botao-icone botao-icone--perigo"
+            title="Excluir trabalho"
+            aria-label="Excluir {{ t.titulo }}"
+            data-keep-text="true"
+          >
+            <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+              <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14zM10 11v6M14 11v6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </form>
+      </div>
+    {% endif %}
   </header>
+
+  {% if t.imagem_arquivo_id %}
+    <img class="detalhe__capa" src="{{ url_for('formulario.ver_arquivo', id=t.imagem_arquivo_id) }}" alt="Imagem de capa de {{ t.titulo }}">
+  {% endif %}
 
   <div class="detalhe__grade-info">
     <p><strong>Autor:</strong> {{ t.autor_nome }} ({{ t.autor_email }})</p>
@@ -24,14 +65,8 @@
 
   <div class="detalhe__acoes">
     <a class="botao botao--principal botao--pequeno" href="{{ url_for('formulario.arquivo', id=t.id) }}" target="_blank" rel="noopener">
-      Visualizar / Baixar PDF
+      Visualizar / Baixar Documento
     </a>
-    {% if session.get('usuario_funcao') | lower == 'admin' %}
-      <a class="botao botao--contorno" href="{{ url_for('formulario.editar', id=t.id) }}">Editar</a>
-      <form method="POST" action="{{ url_for('formulario.excluir', id=t.id) }}" class="form-inline" onsubmit="return confirm('Deseja realmente excluir este formulário?');">
-        <button type="submit" class="botao botao--perigo" data-keep-text="true">Excluir</button>
-      </form>
-    {% endif %}
     <a class="botao botao--contorno" href="{{ url_for('formulario.index') }}">Voltar</a>
   </div>
 </article>

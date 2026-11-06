@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block titulo %}Editar Perfil - PEnsE-Submite{% endblock %}
+
+{% block conteudo %}
+{% set foto_url = url_for('formulario.ver_arquivo', id=u.foto_arquivo_id) if u.foto_arquivo_id else url_for('static', filename='img/gato1.jpg') %}
+<section class="formulario formulario--estreito">
+  <h1 class="formulario__titulo">Editar Usuário</h1>
+
+  <form
+    method="POST"
+    action="{{ url_for('usuario.editar', id=u.id) }}"
+    enctype="multipart/form-data"
+    data-confirm-title="Salvar alterações?"
+    data-confirm-text="Deseja salvar o novo nome e foto deste usuário?"
+    data-confirm-icon="question"
+    data-confirm-btn="Salvar"
+  >
+    <div class="campo">
+      <label for="nome">Nome Completo:</label>
+      <div class="campo__entrada">
+        <input
+          type="text"
+          id="nome"
+          name="nome"
+          maxlength="100"
+          value="{{ u.nome }}"
+          placeholder="Digite o nome completo"
+          required
+        >
+      </div>
+    </div>
+
+    <div class="campo">
+      <label for="email_fixo">E-mail (não editável):</label>
+      <div class="campo__entrada">
+        <input
+          type="email"
+          id="email_fixo"
+          value="{{ u.email }}"
+          disabled
+        >
+      </div>
+    </div>
+
+    <div class="arquivo">
+      <label for="foto" class="botao-arquivo">
+        Alterar foto de perfil (opcional, máx. 10 MB)
+      </label>
+      <input
+        type="file"
+        id="foto"
+        name="foto"
+        accept=".jpg,.jpeg,.png,.webp,.gif,image/*"
+      >
+      <div class="cadastro-preview">
+        <img id="preview-foto" class="card__avatar" src="{{ foto_url }}" alt="Foto de {{ u.nome }}">
+        <span id="nome-foto">Foto atual mantida se nenhuma nova for escolhida</span>
+      </div>
+    </div>
+
+    <div class="formulario__acoes">
+      <a class="botao botao--secundario" href="{{ url_for('usuario.listar') if session.get('usuario_funcao') | lower == 'admin' and session.get('usuario_id') != u.id else url_for('formulario.index') }}">VOLTAR</a>
+      <button type="submit" class="botao botao--principal">SALVAR</button>
+    </div>
+  </form>
+</section>
+
+<script>
+  const inputFoto = document.getElementById("foto");
+  const nomeFoto = document.getElementById("nome-foto");
+  const previewFoto = document.getElementById("preview-foto");
+
+  if (inputFoto) {
+    inputFoto.addEventListener("change", function () {
+      if (inputFoto.files && inputFoto.files.length > 0) {
+        const file = inputFoto.files[0];
+        nomeFoto.textContent = file.name;
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          if (e.target && e.target.result) {
+            previewFoto.src = e.target.result;
+          }
+        };
+        reader.readAsDataURL(file);
+      } else {
+        nomeFoto.textContent = "Foto atual mantida se nenhuma nova for escolhida";
+      }
+    });
+  }
+</script>
+{% endblock %}

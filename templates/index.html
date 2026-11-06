@@ -9,27 +9,64 @@
 {% if trabalhos %}
   <section class="grade">
     {% for t in trabalhos %}
-      {% set foto_url = url_for('formulario.ver_arquivo', id=t.usuario_foto_id) if t.usuario_foto_id else url_for('static', filename='img/gato1.jpg') %}
+      {% set avatar_url = url_for('formulario.ver_arquivo', id=t.usuario_foto_id) if t.usuario_foto_id else url_for('static', filename='img/gato1.jpg') %}
+      {% set capa_url = url_for('formulario.ver_arquivo', id=t.imagem_arquivo_id) if t.imagem_arquivo_id else url_for('static', filename='img/gato2.jpg') %}
       <article class="card">
-        <header class="card__topo">
-          <img class="card__avatar" src="{{ foto_url }}" alt="Avatar de {{ t.autor_nome }}">
-          <div class="card__cabecalho-texto">
-            <h2 class="card__titulo">{{ t.titulo }}</h2>
-            <p class="card__meta">{{ t.modalidade }} - {{ t.autor_nome }}</p>
-            <p class="card__submeta">{{ t.instituicao_nome }} ({{ t.instituicao_cidade }})</p>
-          </div>
-        </header>
-        <img class="card__imagem" src="{{ foto_url }}" alt="Foto de {{ t.autor_nome }}">
-        <p class="card__resumo">{{ t.resumo }}</p>
-        <div class="card__acoes">
-          <a class="botao botao--contorno" href="{{ url_for('formulario.detalhe', id=t.id) }}">Visualizar</a>
-          {% if session.get('usuario_funcao') | lower == 'admin' %}
-            <a class="botao botao--contorno" href="{{ url_for('formulario.editar', id=t.id) }}">Editar</a>
-            <form method="POST" action="{{ url_for('formulario.excluir', id=t.id) }}" class="form-inline" onsubmit="return confirm('Deseja realmente excluir este formulário?');">
-              <button type="submit" class="botao botao--perigo" data-keep-text="true">Excluir</button>
+        {% if session.get('usuario_funcao') | lower == 'admin' %}
+          <div class="card__acoes-topo">
+            <a
+              class="botao-icone botao-icone--editar"
+              href="{{ url_for('formulario.editar', id=t.id) }}"
+              title="Editar trabalho"
+              aria-label="Editar {{ t.titulo }}"
+              data-confirm-title="Editar trabalho?"
+              data-confirm-link="Deseja abrir a edição deste formulário?"
+            >
+              <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                <path d="M18.37 2.63a2.12 2.12 0 0 1 3 3L14 13l-4 1 1-4 7.37-7.37zM11 6H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </a>
+            <form
+              method="POST"
+              action="{{ url_for('formulario.excluir', id=t.id) }}"
+              class="form-inline"
+              data-confirm-title="Excluir formulário?"
+              data-confirm-text="Deseja realmente excluir este formulário? Esta ação não pode ser desfeita."
+              data-confirm-icon="warning"
+              data-confirm-btn="Sim, excluir"
+            >
+              <button
+                type="submit"
+                class="botao-icone botao-icone--perigo"
+                title="Excluir trabalho"
+                aria-label="Excluir {{ t.titulo }}"
+                data-keep-text="true"
+              >
+                <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                  <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14zM10 11v6M14 11v6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
             </form>
-          {% endif %}
-        </div>
+          </div>
+        {% endif %}
+
+        <a class="card__link-visualizar" href="{{ url_for('formulario.detalhe', id=t.id) }}" aria-label="Visualizar detalhes de {{ t.titulo }}">
+          <header class="card__topo">
+            <img class="card__avatar" src="{{ avatar_url }}" alt="Avatar de {{ t.autor_nome }}">
+            <div class="card__cabecalho-texto">
+              <h2 class="card__titulo">{{ t.titulo }}</h2>
+              <p class="card__meta">{{ t.modalidade }} - {{ t.autor_nome }}</p>
+              <p class="card__submeta">{{ t.instituicao_nome }} ({{ t.instituicao_cidade }})</p>
+            </div>
+          </header>
+          <div class="card__midia">
+            <img class="card__imagem" src="{{ capa_url }}" alt="Imagem do trabalho {{ t.titulo }}">
+            <div class="card__hover-overlay">
+              <span>Passe o mouse ou clique para visualizar</span>
+            </div>
+          </div>
+          <p class="card__resumo">{{ t.resumo }}</p>
+        </a>
       </article>
     {% endfor %}
   </section>

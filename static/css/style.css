@@ -203,9 +203,13 @@ a:focus-visible, button:focus-visible {
 }
 .card__topo {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.75rem;
   padding: 0.9rem 1rem 0.6rem;
+}
+.card--com-acoes .card__topo,
+.card:has(.card__acoes-topo) .card__topo {
+  padding-right: 5.5rem;
 }
 .card__cabecalho-texto {
   min-width: 0;
@@ -538,6 +542,11 @@ button:disabled {
   background: var(--verde-escuro);
   color: var(--branco);
 }
+.botao-arquivo--erro {
+  border: 2px solid #b42318;
+  color: #b42318;
+  background: #fde8e8;
+}
 #nome-arquivo, #nome-foto {
   font-size: 0.9rem;
   color: #222;
@@ -728,6 +737,262 @@ button:disabled {
   font-size: 0.9rem;
   color: #222;
   overflow-wrap: anywhere;
+}
+
+/* ---------- Botão e Barra de Voltar ---------- */
+.barra-voltar {
+  display: flex;
+  align-items: center;
+  margin: 0 auto 1.15rem;
+}
+.barra-voltar--formulario {
+  max-width: 900px;
+}
+.barra-voltar--estreito {
+  max-width: 560px;
+}
+.botao-voltar {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1.1rem;
+  background: var(--branco);
+  color: var(--verde-escuro);
+  border: 2px solid var(--verde-escuro);
+  border-radius: 999px;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+  transition: background 0.18s ease, color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+}
+.botao-voltar svg {
+  flex: none;
+  transition: transform 0.18s ease;
+}
+.botao-voltar:hover:not(:disabled) {
+  background: var(--verde-escuro);
+  color: var(--branco);
+  transform: translateX(-2px);
+  box-shadow: 0 4px 10px rgba(0, 92, 34, 0.22);
+}
+.botao-voltar:hover:not(:disabled) svg {
+  transform: translateX(-3px);
+}
+.botao-voltar--wizard {
+  font-size: clamp(1rem, 1.8vw, 1.15rem);
+  padding: 0.55rem 1.35rem;
+}
+.wizard-acoes .botao-voltar[hidden] {
+  display: none !important;
+}
+
+/* ---------- Catálogo Solar 3D (Three.js) ---------- */
+.catalogo-solar {
+  background: var(--branco);
+  border-radius: var(--raio);
+  padding: 1.25rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.14);
+}
+.catalogo-solar__topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+.catalogo-solar__titulo {
+  margin: 0;
+  color: var(--verde-escuro);
+  font-size: clamp(1.3rem, 2.5vw, 1.85rem);
+}
+.catalogo-solar__subtitulo {
+  margin: 0.25rem 0 0;
+  font-size: 0.95rem;
+  color: #444;
+}
+.catalogo-solar__controles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.botao-solar {
+  background: var(--verde-escuro);
+  color: var(--branco);
+  border: 0;
+  border-radius: 999px;
+  padding: 0.45rem 0.95rem;
+  font-family: inherit;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+.botao-solar:hover {
+  background: #00431a;
+  transform: translateY(-1px);
+}
+.botao-solar--sol {
+  background: var(--verde-claro);
+  color: var(--texto);
+}
+.botao-solar--sol:hover {
+  background: #96bc46;
+}
+.catalogo-solar__palco {
+  position: relative;
+  width: 100%;
+  height: clamp(460px, 70vh, 680px);
+  border-radius: var(--raio);
+  overflow: hidden;
+  background: #050b14;
+}
+.catalogo-solar__canvas {
+  width: 100%;
+  height: 100%;
+}
+.catalogo-solar__canvas canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: grab;
+}
+.catalogo-solar__canvas canvas:active {
+  cursor: grabbing;
+}
+.catalogo-solar__labels {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.solar-label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: auto;
+  background: rgba(5, 11, 20, 0.78);
+  color: #fff;
+  border: 1px solid rgba(170, 205, 94, 0.65);
+  border-radius: 999px;
+  padding: 0.22rem 0.7rem;
+  font-family: inherit;
+  font-size: 0.78rem;
+  white-space: nowrap;
+  max-width: 190px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.solar-label:hover,
+.solar-label.ativo {
+  background: var(--verde-escuro);
+  border-color: var(--verde-claro);
+  font-weight: 700;
+}
+.catalogo-solar__painel {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  bottom: 1rem;
+  width: min(350px, calc(100% - 2rem));
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(8px);
+  border-radius: var(--raio);
+  padding: 1rem;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+  overflow-y: auto;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+.catalogo-solar__painel[hidden] {
+  display: none !important;
+}
+.catalogo-solar__fechar {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 0;
+  background: rgba(0, 0, 0, 0.65);
+  color: #fff;
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.catalogo-solar__capa {
+  width: 100%;
+  height: 130px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+.catalogo-solar__cabecalho-autor {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+.catalogo-solar__badge {
+  display: inline-block;
+  background: var(--verde-claro);
+  color: var(--texto);
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.12rem 0.55rem;
+  border-radius: 999px;
+}
+.catalogo-solar__painel-titulo {
+  margin: 0.15rem 0 0;
+  font-size: 1.1rem;
+  overflow-wrap: anywhere;
+}
+.catalogo-solar__meta {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #333;
+}
+.catalogo-solar__resumo {
+  margin: 0.35rem 0;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: #111;
+  overflow-wrap: anywhere;
+}
+.catalogo-solar__acoes {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: auto;
+  padding-top: 0.5rem;
+}
+.catalogo-solar__legenda {
+  position: absolute;
+  left: 1rem;
+  bottom: 0.85rem;
+  display: flex;
+  gap: 0.85rem;
+  flex-wrap: wrap;
+  background: rgba(5, 11, 20, 0.75);
+  color: #fff;
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  pointer-events: none;
+}
+.ponto-cor {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 0.3rem;
 }
 
 /* ---------- Responsivo ---------- */

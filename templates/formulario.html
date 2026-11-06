@@ -5,6 +5,15 @@
 {% endblock %}
 
 {% block conteudo %}
+<div class="barra-voltar barra-voltar--formulario">
+  <a class="botao-voltar" href="{{ url_for('formulario.detalhe', id=form_atual.id) if edicao and form_atual.get('id') else url_for('formulario.index') }}">
+    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+      <path d="M19 12H5M12 19l-7-7 7-7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    {{ 'Voltar para o trabalho' if edicao and form_atual.get('id') else 'Voltar para o início' }}
+  </a>
+</div>
+
 <section class="formulario">
   <h1 class="formulario__titulo">
     {{ 'Editar Submissão' if edicao else 'Formulário de Submissão' }}
@@ -214,7 +223,7 @@
       </fieldset>
 
       <div class="arquivo">
-        <label for="arquivo" class="botao-arquivo">
+        <label for="arquivo" id="label-arquivo" class="botao-arquivo">
           {{ 'Substituir documento (opcional, máx. 10 MB)' if edicao else 'Adicionar documento (PDF, DOCX, ODT, PPTX, XLSX - máx. 10 MB)' }}
         </label>
         <input
@@ -222,7 +231,7 @@
           id="arquivo"
           name="arquivo"
           accept=".pdf,.doc,.docx,.odt,.rtf,.ppt,.pptx,.xls,.xlsx"
-          {% if not edicao %}required{% endif %}
+          data-obrigatorio="{{ 'false' if edicao else 'true' }}"
         >
         <span id="nome-arquivo">
           {{ 'Documento atual mantido caso nenhum novo seja selecionado' if edicao else 'Nenhum documento selecionado' }}
@@ -246,8 +255,11 @@
     </div>
 
     <div class="formulario__acoes wizard-acoes">
-      <button type="button" id="btn-voltar" class="botao botao--secundario" hidden>
-        VOLTAR
+      <button type="button" id="btn-voltar" class="botao-voltar botao-voltar--wizard" data-keep-text="true" hidden>
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+          <path d="M19 12H5M12 19l-7-7 7-7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Etapa anterior
       </button>
       <button type="button" id="btn-proximo" class="botao botao--principal">
         PRÓXIMO
@@ -270,6 +282,7 @@
     const btnEnviar = document.getElementById("btn-enviar");
     const msgErro = document.getElementById("wizard-erro");
     const arquivo = document.getElementById("arquivo");
+    const labelArquivo = document.getElementById("label-arquivo");
     const nomeArquivo = document.getElementById("nome-arquivo");
     const imagem = document.getElementById("imagem");
     const nomeImagem = document.getElementById("nome-imagem");
@@ -279,6 +292,7 @@
 
     if (arquivo) {
       arquivo.addEventListener("change", function () {
+        if (labelArquivo) labelArquivo.classList.remove("botao-arquivo--erro");
         if (arquivo.files && arquivo.files.length > 0) {
           if (arquivo.files[0].size > MAX_BYTES) {
             mostrarErro("O documento deve ter no máximo 10 MB.");
@@ -312,9 +326,18 @@
     }
 
     function mostrarErro(texto) {
-      if (!msgErro) return;
-      msgErro.textContent = texto;
-      msgErro.hidden = false;
+      if (msgErro) {
+        msgErro.textContent = texto;
+        msgErro.hidden = false;
+      }
+      if (typeof Swal !== "undefined") {
+        Swal.fire({
+          title: "Atenção",
+          text: texto,
+          icon: "warning",
+          confirmButtonColor: "#005c22",
+        });
+      }
     }
 
     function esconderErro() {
@@ -335,8 +358,10 @@
 
       for (const campo of campos) {
         if (campo.type === "file") {
-          if (campo.required && (!campo.files || campo.files.length === 0)) {
-            mostrarErro("Por favor, selecione o documento do trabalho antes de enviar.");
+          const obrigatorio = campo.required || campo.dataset.obrigatorio === "true";
+          if (obrigatorio && (!campo.files || campo.files.length === 0)) {
+            if (labelArquivo) labelArquivo.classList.add("botao-arquivo--erro");
+            mostrarErro("Você não anexou o documento do trabalho. Selecione um arquivo antes de enviar.");
             return false;
           }
           if (campo.files && campo.files.length > 0 && campo.files[0].size > MAX_BYTES) {

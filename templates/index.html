@@ -7,12 +7,14 @@
 </section>
 
 {% if trabalhos %}
+  {% set eh_admin = (session.get('usuario_funcao') | lower) == 'admin' %}
   <section class="grade">
     {% for t in trabalhos %}
       {% set avatar_url = url_for('formulario.ver_arquivo', id=t.usuario_foto_id) if t.usuario_foto_id else url_for('static', filename='img/gato1.jpg') %}
       {% set capa_url = url_for('formulario.ver_arquivo', id=t.imagem_arquivo_id) if t.imagem_arquivo_id else url_for('static', filename='img/gato2.jpg') %}
-      <article class="card">
-        {% if session.get('usuario_funcao') | lower == 'admin' %}
+      {% set pode_editar = eh_admin or (t.usuario_id and (t.usuario_id | int) == (session.get('usuario_id') | int)) %}
+      <article class="card {{ 'card--com-acoes' if pode_editar else '' }}">
+        {% if pode_editar %}
           <div class="card__acoes-topo">
             <a
               class="botao-icone botao-icone--editar"
@@ -26,27 +28,29 @@
                 <path d="M18.37 2.63a2.12 2.12 0 0 1 3 3L14 13l-4 1 1-4 7.37-7.37zM11 6H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             </a>
-            <form
-              method="POST"
-              action="{{ url_for('formulario.excluir', id=t.id) }}"
-              class="form-inline"
-              data-confirm-title="Excluir formulário?"
-              data-confirm-text="Deseja realmente excluir este formulário? Esta ação não pode ser desfeita."
-              data-confirm-icon="warning"
-              data-confirm-btn="Sim, excluir"
-            >
-              <button
-                type="submit"
-                class="botao-icone botao-icone--perigo"
-                title="Excluir trabalho"
-                aria-label="Excluir {{ t.titulo }}"
-                data-keep-text="true"
+            {% if eh_admin %}
+              <form
+                method="POST"
+                action="{{ url_for('formulario.excluir', id=t.id) }}"
+                class="form-inline"
+                data-confirm-title="Excluir formulário?"
+                data-confirm-text="Deseja realmente excluir este formulário? Esta ação não pode ser desfeita."
+                data-confirm-icon="warning"
+                data-confirm-btn="Sim, excluir"
               >
-                <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-                  <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14zM10 11v6M14 11v6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </button>
-            </form>
+                <button
+                  type="submit"
+                  class="botao-icone botao-icone--perigo"
+                  title="Excluir trabalho"
+                  aria-label="Excluir {{ t.titulo }}"
+                  data-keep-text="true"
+                >
+                  <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                    <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14zM10 11v6M14 11v6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+              </form>
+            {% endif %}
           </div>
         {% endif %}
 

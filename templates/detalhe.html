@@ -3,6 +3,18 @@
 
 {% block conteudo %}
 {% set foto_url = url_for('formulario.ver_arquivo', id=t.usuario_foto_id) if t.usuario_foto_id else url_for('static', filename='img/gato1.jpg') %}
+{% set eh_admin = (session.get('usuario_funcao') | lower) == 'admin' %}
+{% set pode_editar = eh_admin or (t.usuario_id and (t.usuario_id | int) == (session.get('usuario_id') | int)) %}
+
+<div class="barra-voltar">
+  <a class="botao-voltar" href="{{ url_for('formulario.index') }}">
+    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+      <path d="M19 12H5M12 19l-7-7 7-7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    Voltar para o início
+  </a>
+</div>
+
 <article class="detalhe">
   <header class="detalhe__topo">
     <img class="detalhe__avatar" src="{{ foto_url }}" alt="Avatar de {{ t.autor_nome }}">
@@ -10,7 +22,7 @@
       <h1>{{ t.titulo }}</h1>
       <p class="detalhe__meta">{{ t.modalidade }} — {{ t.autor_nome }} ({{ t.instituicao_nome }})</p>
     </div>
-    {% if session.get('usuario_funcao') | lower == 'admin' %}
+    {% if pode_editar %}
       <div class="detalhe__acoes-topo">
         <a
           class="botao-icone botao-icone--editar"
@@ -24,27 +36,29 @@
             <path d="M18.37 2.63a2.12 2.12 0 0 1 3 3L14 13l-4 1 1-4 7.37-7.37zM11 6H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </a>
-        <form
-          method="POST"
-          action="{{ url_for('formulario.excluir', id=t.id) }}"
-          class="form-inline"
-          data-confirm-title="Excluir formulário?"
-          data-confirm-text="Deseja realmente excluir este formulário?"
-          data-confirm-icon="warning"
-          data-confirm-btn="Sim, excluir"
-        >
-          <button
-            type="submit"
-            class="botao-icone botao-icone--perigo"
-            title="Excluir trabalho"
-            aria-label="Excluir {{ t.titulo }}"
-            data-keep-text="true"
+        {% if eh_admin %}
+          <form
+            method="POST"
+            action="{{ url_for('formulario.excluir', id=t.id) }}"
+            class="form-inline"
+            data-confirm-title="Excluir formulário?"
+            data-confirm-text="Deseja realmente excluir este formulário?"
+            data-confirm-icon="warning"
+            data-confirm-btn="Sim, excluir"
           >
-            <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
-              <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14zM10 11v6M14 11v6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </button>
-        </form>
+            <button
+              type="submit"
+              class="botao-icone botao-icone--perigo"
+              title="Excluir trabalho"
+              aria-label="Excluir {{ t.titulo }}"
+              data-keep-text="true"
+            >
+              <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14zM10 11v6M14 11v6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </form>
+        {% endif %}
       </div>
     {% endif %}
   </header>
@@ -67,7 +81,12 @@
     <a class="botao botao--principal botao--pequeno" href="{{ url_for('formulario.arquivo', id=t.id) }}" target="_blank" rel="noopener">
       Visualizar / Baixar Documento
     </a>
-    <a class="botao botao--contorno" href="{{ url_for('formulario.index') }}">Voltar</a>
+    <a class="botao-voltar" href="{{ url_for('formulario.index') }}">
+      <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+        <path d="M19 12H5M12 19l-7-7 7-7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Voltar
+    </a>
   </div>
 </article>
 {% endblock %}

@@ -3,6 +3,15 @@
 {% block titulo %}Gerenciar Usuários - PEnsE-Submite{% endblock %}
 
 {% block conteudo %}
+<div class="barra-voltar">
+  <a class="botao-voltar" href="{{ url_for('formulario.index') }}">
+    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+      <path d="M19 12H5M12 19l-7-7 7-7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    Voltar para o início
+  </a>
+</div>
+
 <section class="painel-usuarios">
   <h1 class="formulario__titulo">Gerenciamento de Usuários</h1>
 

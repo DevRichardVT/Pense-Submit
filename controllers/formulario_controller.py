@@ -105,6 +105,13 @@ def index():
     return render_template("index.html", trabalhos=trabalhos)
 
 
+@formulario_bp.route("/catalogo")
+@login_required
+def catalogo():
+    trabalhos = Formulario.listar_todos()
+    return render_template("catalogo.html", trabalhos=trabalhos)
+
+
 @formulario_bp.route("/formulario", methods=["GET", "POST"])
 @login_required
 def criar():
@@ -215,11 +222,19 @@ def arquivo(id: int):
 
 
 @formulario_bp.route("/trabalho/<int:id>/editar", methods=["GET", "POST"])
-@admin_required
+@login_required
 def editar(id: int):
     trabalho = Formulario.buscar_por_id(id)
     if not trabalho:
         abort(404)
+
+    eh_admin = str(session.get("usuario_funcao", "")).lower() == "admin"
+    eh_dono = (
+        trabalho.get("usuario_id") is not None
+        and int(trabalho["usuario_id"]) == int(session.get("usuario_id", 0))
+    )
+    if not (eh_admin or eh_dono):
+        abort(403)
 
     modalidades = Modalidade.listar_todas()
 

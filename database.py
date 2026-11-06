@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
     funcao_id INTEGER NOT NULL REFERENCES funcoes(id),
     nome VARCHAR(100) NOT NULL,
     email VARCHAR(100) NOT NULL,
-    senha VARCHAR(20) NOT NULL,
+    senha VARCHAR(255) NOT NULL,
     foto_arquivo_id INTEGER REFERENCES arquivos(id) ON DELETE SET NULL,
     ativo BOOLEAN NOT NULL DEFAULT TRUE
 );
@@ -59,14 +59,17 @@ CREATE TABLE IF NOT EXISTS formularios (
     resumo TEXT NOT NULL,
     arquivo BYTEA,
     palavra_chave VARCHAR(100) NOT NULL,
-    area_conhecimento VARCHAR(255) NOT NULL
+    area_conhecimento VARCHAR(255) NOT NULL,
+    status_avaliacao VARCHAR(30) NOT NULL DEFAULT 'Em análise'
 );
 
 ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS foto_arquivo_id INTEGER REFERENCES arquivos(id) ON DELETE SET NULL;
 ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS ativo BOOLEAN NOT NULL DEFAULT TRUE;
+ALTER TABLE usuarios ALTER COLUMN senha TYPE VARCHAR(255);
 ALTER TABLE formularios ADD COLUMN IF NOT EXISTS usuario_id INTEGER REFERENCES usuarios(id) ON DELETE SET NULL;
 ALTER TABLE formularios ADD COLUMN IF NOT EXISTS arquivo_id INTEGER REFERENCES arquivos(id) ON DELETE SET NULL;
 ALTER TABLE formularios ADD COLUMN IF NOT EXISTS imagem_arquivo_id INTEGER REFERENCES arquivos(id) ON DELETE SET NULL;
+ALTER TABLE formularios ADD COLUMN IF NOT EXISTS status_avaliacao VARCHAR(30) NOT NULL DEFAULT 'Em análise';
 ALTER TABLE formularios ALTER COLUMN arquivo DROP NOT NULL;
 """
 

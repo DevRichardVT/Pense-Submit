@@ -5,6 +5,8 @@
 {% set foto_url = url_for('formulario.ver_arquivo', id=t.usuario_foto_id) if t.usuario_foto_id else url_for('static', filename='img/gato1.jpg') %}
 {% set eh_admin = (session.get('usuario_funcao') | lower) == 'admin' %}
 {% set pode_editar = eh_admin or (t.usuario_id and (t.usuario_id | int) == (session.get('usuario_id') | int)) %}
+{% set status_atual = t.get('status_avaliacao', 'Em análise') %}
+{% set status_classe = 'aprovado' if status_atual == 'Aprovado' else ('correcao' if status_atual == 'Correção' else 'analise') %}
 
 <div class="barra-voltar">
   <a class="botao-voltar" href="{{ url_for('formulario.index') }}">
@@ -19,6 +21,9 @@
   <header class="detalhe__topo">
     <img class="detalhe__avatar" src="{{ foto_url }}" alt="Avatar de {{ t.autor_nome }}">
     <div class="detalhe__topo-texto">
+      <div class="detalhe__badges">
+        <span class="badge-avaliacao badge-avaliacao--{{ status_classe }}">{{ status_atual }}</span>
+      </div>
       <h1>{{ t.titulo }}</h1>
       <p class="detalhe__meta">{{ t.modalidade }} — {{ t.autor_nome }} ({{ t.instituicao_nome }})</p>
     </div>
@@ -63,6 +68,26 @@
     {% endif %}
   </header>
 
+  {% if eh_admin %}
+    <form
+      method="POST"
+      action="{{ url_for('formulario.atualizar_status', id=t.id) }}"
+      class="avaliacao-admin"
+      data-confirm-title="Atualizar avaliação?"
+      data-confirm-text="Deseja salvar o novo status de avaliação deste trabalho?"
+      data-confirm-icon="question"
+      data-confirm-btn="Salvar status"
+    >
+      <label for="status_avaliacao"><strong>Avaliação da Banca (Admin):</strong></label>
+      <select id="status_avaliacao" name="status_avaliacao" class="avaliacao-admin__select">
+        {% for opcao in ('Em análise', 'Aprovado', 'Correção') %}
+          <option value="{{ opcao }}" {% if status_atual == opcao %}selected{% endif %}>{{ opcao }}</option>
+        {% endfor %}
+      </select>
+      <button type="submit" class="botao botao--contorno" data-keep-text="true">Salvar Status</button>
+    </form>
+  {% endif %}
+
   {% if t.imagem_arquivo_id %}
     <img class="detalhe__capa" src="{{ url_for('formulario.ver_arquivo', id=t.imagem_arquivo_id) }}" alt="Imagem de capa de {{ t.titulo }}">
   {% endif %}
@@ -76,6 +101,17 @@
   </div>
 
   <p class="detalhe__resumo">{{ t.resumo }}</p>
+
+  {% if t.get('arquivo_content_type', 'application/pdf') == 'application/pdf' %}
+    <div class="detalhe__pdf-box">
+      <h2 class="detalhe__subtitulo-pdf">Pré-visualização do Documento (PDF)</h2>
+      <iframe
+        class="detalhe__pdf-viewer"
+        src="{{ url_for('formulario.arquivo', id=t.id) }}"
+        title="Documento PDF de {{ t.titulo }}"
+      ></iframe>
+    </div>
+  {% endif %}
 
   <div class="detalhe__acoes">
     <a class="botao botao--principal botao--pequeno" href="{{ url_for('formulario.arquivo', id=t.id) }}" target="_blank" rel="noopener">

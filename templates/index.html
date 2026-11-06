@@ -8,12 +8,40 @@
 
 {% if trabalhos %}
   {% set eh_admin = (session.get('usuario_funcao') | lower) == 'admin' %}
-  <section class="grade">
+  {% set usuario_logado_id = session.get('usuario_id') | int if session.get('usuario_id') else 0 %}
+
+  <section class="barra-filtros" aria-label="Buscar e filtrar trabalhos">
+    <div class="barra-filtros__busca">
+      <input
+        type="search"
+        id="busca-trabalhos"
+        placeholder="Buscar por título, autor, instituição ou palavra-chave..."
+        aria-label="Buscar trabalhos"
+      >
+    </div>
+    <div class="barra-filtros__botoes" role="group" aria-label="Filtrar por modalidade">
+      <button type="button" class="chip-filtro ativo" data-filtro="todos">Todos</button>
+      <button type="button" class="chip-filtro" data-filtro="ensino">Ensino</button>
+      <button type="button" class="chip-filtro" data-filtro="pesquisa">Pesquisa</button>
+      <button type="button" class="chip-filtro" data-filtro="extensão">Extensão</button>
+      <button type="button" class="chip-filtro" data-filtro="meus">Meus Trabalhos</button>
+    </div>
+  </section>
+
+  <section class="grade" id="grade-trabalhos">
     {% for t in trabalhos %}
       {% set avatar_url = url_for('formulario.ver_arquivo', id=t.usuario_foto_id) if t.usuario_foto_id else url_for('static', filename='img/gato1.jpg') %}
       {% set capa_url = url_for('formulario.ver_arquivo', id=t.imagem_arquivo_id) if t.imagem_arquivo_id else url_for('static', filename='img/gato2.jpg') %}
-      {% set pode_editar = eh_admin or (t.usuario_id and (t.usuario_id | int) == (session.get('usuario_id') | int)) %}
-      <article class="card {{ 'card--com-acoes' if pode_editar else '' }}">
+      {% set eh_meu = t.usuario_id and (t.usuario_id | int) == usuario_logado_id %}
+      {% set pode_editar = eh_admin or eh_meu %}
+      {% set status_atual = t.get('status_avaliacao', 'Em análise') %}
+      {% set status_classe = 'aprovado' if status_atual == 'Aprovado' else ('correcao' if status_atual == 'Correção' else 'analise') %}
+      <article
+        class="card {{ 'card--com-acoes' if pode_editar else '' }}"
+        data-modalidade="{{ t.modalidade | lower }}"
+        data-meu="{{ 'sim' if eh_meu else 'nao' }}"
+        data-busca="{{ (t.titulo ~ ' ' ~ t.autor_nome ~ ' ' ~ t.instituicao_nome ~ ' ' ~ t.palavra_chave ~ ' ' ~ t.area_conhecimento ~ ' ' ~ t.resumo) | lower }}"
+      >
         {% if pode_editar %}
           <div class="card__acoes-topo">
             <a
@@ -58,6 +86,7 @@
           <header class="card__topo">
             <img class="card__avatar" src="{{ avatar_url }}" alt="Avatar de {{ t.autor_nome }}">
             <div class="card__cabecalho-texto">
+              <span class="badge-avaliacao badge-avaliacao--{{ status_classe }}">{{ status_atual }}</span>
               <h2 class="card__titulo">{{ t.titulo }}</h2>
               <p class="card__meta">{{ t.modalidade }} - {{ t.autor_nome }}</p>
               <p class="card__submeta">{{ t.instituicao_nome }} ({{ t.instituicao_cidade }})</p>
@@ -74,6 +103,52 @@
       </article>
     {% endfor %}
   </section>
+  <p id="vazio-filtro" class="vazio" hidden>Nenhum trabalho encontrado para o filtro selecionado.</p>
+
+  <script>
+    (function () {
+      const inputBusca = document.getElementById("busca-trabalhos");
+      const botoesFiltro = Array.from(document.querySelectorAll(".chip-filtro"));
+      const cards = Array.from(document.querySelectorAll("#grade-trabalhos .card"));
+      const msgVazio = document.getElementById("vazio-filtro");
+      let filtroAtivo = "todos";
+
+      function aplicarFiltro() {
+        const termo = (inputBusca ? inputBusca.value : "").trim().toLowerCase();
+        let visiveis = 0;
+
+        cards.forEach(function (card) {
+          const mod = card.dataset.modalidade || "";
+          const ehMeu = card.dataset.meu === "sim";
+          const texto = card.dataset.busca || "";
+
+          const bateMod =
+            filtroAtivo === "todos" ||
+            (filtroAtivo === "meus" ? ehMeu : mod.includes(filtroAtivo));
+          const bateTermo = !termo || texto.includes(termo);
+          const mostrar = bateMod && bateTermo;
+
+          card.hidden = !mostrar;
+          if (mostrar) visiveis++;
+        });
+
+        if (msgVazio) msgVazio.hidden = visiveis > 0;
+      }
+
+      if (inputBusca) {
+        inputBusca.addEventListener("input", aplicarFiltro);
+      }
+      botoesFiltro.forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          filtroAtivo = btn.dataset.filtro || "todos";
+          botoesFiltro.forEach(function (b) {
+            b.classList.toggle("ativo", b === btn);
+          });
+          aplicarFiltro();
+        });
+      });
+    })();
+  </script>
 {% else %}
   <p class="vazio">Nenhum trabalho submetido ainda. Seja o primeiro!</p>
 {% endif %}

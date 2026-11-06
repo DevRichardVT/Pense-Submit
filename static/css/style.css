@@ -995,6 +995,135 @@ button:disabled {
   margin-right: 0.3rem;
 }
 
+/* ---------- Busca, Filtros, Status de Avaliação e PDF Viewer ---------- */
+.barra-filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.75rem;
+  background: var(--branco);
+  padding: 0.85rem 1.1rem;
+  border-radius: var(--raio);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+.barra-filtros__busca {
+  flex: 1 1 260px;
+}
+.barra-filtros__busca input {
+  width: 100%;
+  padding: 0.55rem 0.9rem;
+  border: 2px solid #ccc;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 0.95rem;
+}
+.barra-filtros__busca input:focus {
+  outline: none;
+  border-color: var(--verde-escuro);
+}
+.barra-filtros__botoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+.chip-filtro {
+  background: #f0f5e4;
+  color: var(--texto);
+  border: 1px solid var(--verde-claro);
+  border-radius: 999px;
+  padding: 0.4rem 0.9rem;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.chip-filtro:hover,
+.chip-filtro.ativo {
+  background: var(--verde-escuro);
+  color: var(--branco);
+  border-color: var(--verde-escuro);
+}
+.card[hidden] {
+  display: none !important;
+}
+
+.badge-avaliacao {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.14rem 0.55rem;
+  border-radius: 999px;
+  margin-bottom: 0.25rem;
+}
+.badge-avaliacao--analise {
+  background: #fef3c7;
+  color: #92400e;
+}
+.badge-avaliacao--aprovado {
+  background: #dfecc3;
+  color: var(--verde-escuro);
+}
+.badge-avaliacao--correcao {
+  background: #fde8e8;
+  color: #b42318;
+}
+
+.avaliacao-admin {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  background: #f5f7f0;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+.avaliacao-admin__select {
+  padding: 0.4rem 0.75rem;
+  border: 1px solid var(--verde-escuro);
+  border-radius: 6px;
+  font: inherit;
+  background: var(--branco);
+}
+
+.detalhe__pdf-box {
+  margin: 1.5rem 0;
+}
+.detalhe__subtitulo-pdf {
+  font-size: 1.1rem;
+  color: var(--verde-escuro);
+  margin: 0 0 0.5rem;
+}
+.detalhe__pdf-viewer {
+  width: 100%;
+  height: 520px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background: #f8f8f8;
+}
+
+.preview-capa-form {
+  width: 96px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 2px solid var(--verde-escuro);
+  flex: none;
+}
+
+.catalogo-solar__input-busca,
+.catalogo-solar__select {
+  padding: 0.4rem 0.85rem;
+  border: 1px solid var(--verde-escuro);
+  border-radius: 999px;
+  font: inherit;
+  font-size: 0.85rem;
+  background: var(--branco);
+}
+
 /* ---------- Responsivo ---------- */
 @media (max-width: 900px) {
   .topo {

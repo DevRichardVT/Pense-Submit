@@ -248,9 +248,17 @@
           name="imagem"
           accept=".jpg,.jpeg,.png,.webp,.gif,image/*"
         >
-        <span id="nome-imagem">
-          {{ 'Imagem atual mantida caso nenhuma nova seja selecionada' if edicao else 'Nenhuma imagem selecionada (usará capa padrão)' }}
-        </span>
+        <div class="cadastro-preview">
+          <img
+            id="preview-imagem-card"
+            class="preview-capa-form"
+            src="{{ url_for('formulario.ver_arquivo', id=form_atual.get('imagem_arquivo_id')) if form_atual.get('imagem_arquivo_id') else url_for('static', filename='img/gato2.jpg') }}"
+            alt="Pré-visualização da capa do card"
+          >
+          <span id="nome-imagem">
+            {{ 'Imagem atual mantida caso nenhuma nova seja selecionada' if edicao else 'Nenhuma imagem selecionada (usará capa padrão)' }}
+          </span>
+        </div>
       </div>
     </div>
 
@@ -286,6 +294,7 @@
     const nomeArquivo = document.getElementById("nome-arquivo");
     const imagem = document.getElementById("imagem");
     const nomeImagem = document.getElementById("nome-imagem");
+    const previewImagemCard = document.getElementById("preview-imagem-card");
 
     let etapaAtual = 1;
     const totalEtapas = etapas.length;
@@ -318,6 +327,15 @@
             return;
           }
           nomeImagem.textContent = imagem.files[0].name;
+          if (previewImagemCard) {
+            const reader = new FileReader();
+            reader.onload = function (ev) {
+              if (ev.target && ev.target.result) {
+                previewImagemCard.src = ev.target.result;
+              }
+            };
+            reader.readAsDataURL(imagem.files[0]);
+          }
           esconderErro();
         } else {
           nomeImagem.textContent = "Nenhuma imagem selecionada (usará capa padrão)";

@@ -433,3 +433,60 @@ def test_submissao_sem_anexo_exibe_aviso_ao_usuario():
     assert 'data-obrigatorio="true"' in resp_get.get_data(as_text=True)
     assert resp_post.status_code == 400
     assert "obrigatório" in resp_post.get_data(as_text=True).lower()
+
+
+def test_admin_atualiza_status_avaliacao_e_detalhe_exibe_pdf_viewer():
+    with patch("database.init_db"):
+        app = create_app(testing=True)
+    client = app.test_client()
+    with client.session_transaction() as sess:
+        sess["usuario_id"] = 1
+        sess["usuario_nome"] = "Admin"
+        sess["usuario_email"] = "admin@ifrs.edu.br"
+        sess["usuario_funcao"] = "Admin"
+
+    with patch(
+        "controllers.formulario_controller.Formulario.atualizar_status",
+        return_value=True,
+    ) as mock_status:
+        resp_status = client.post(
+            "/trabalho/10/status",
+            data={"status_avaliacao": "Aprovado"},
+            follow_redirects=False,
+        )
+
+    assert resp_status.status_code == 302
+    mock_status.assert_called_once_with(10, "Aprovado")
+
+    with patch(
+        "controllers.formulario_controller.Formulario.buscar_por_id",
+        return_value={
+            "id": 10,
+            "titulo": "Artigo PDF",
+            "resumo": "Resumo...",
+            "palavra_chave": "pdf",
+            "area_conhecimento": "Exatas",
+            "modalidade_id": 1,
+            "modalidade": "Pesquisa",
+            "autor_id": 1,
+            "autor_nome": "Admin",
+            "autor_email": "admin@ifrs.edu.br",
+            "autor_area": "TI",
+            "autor_cidade": "Farroupilha",
+            "instituicao_id": 1,
+            "instituicao_nome": "IFRS",
+            "instituicao_cidade": "Farroupilha",
+            "usuario_id": 1,
+            "usuario_foto_id": None,
+            "arquivo_id": 88,
+            "imagem_arquivo_id": None,
+            "status_avaliacao": "Aprovado",
+            "arquivo_content_type": "application/pdf",
+        },
+    ):
+        resp_det = client.get("/trabalho/10")
+
+    html_det = resp_det.get_data(as_text=True)
+    assert resp_det.status_code == 200
+    assert "detalhe__pdf-viewer" in html_det
+    assert "Aprovado" in html_det

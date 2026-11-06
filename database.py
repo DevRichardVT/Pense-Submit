@@ -55,7 +55,7 @@ CREATE TABLE IF NOT EXISTS formularios (
 @contextmanager
 def get_connection():
     """Gerencia uma conexão PostgreSQL garantindo o fechamento ao sair do bloco with."""
-    database_url = os.environ.get("DATABASE_URL")
+    database_url = os.environ.get("DATABASE_URL") or os.environ.get("POSTGRES_URL")
     if database_url:
         conn = psycopg2.connect(database_url)
     else:

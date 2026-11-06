@@ -14,12 +14,21 @@
           <img class="card__avatar" src="{{ url_for('static', filename='img/gato1.jpg') }}" alt="">
           <div>
             <h2 class="card__titulo">{{ t.titulo }}</h2>
-            <p class="card__meta">{{ t.modalidade }} - {{ t.autor }}</p>
+            <p class="card__meta">{{ t.modalidade }} - {{ t.autor_nome }}</p>
+            <p class="card__submeta">{{ t.instituicao_nome }} ({{ t.instituicao_cidade }})</p>
           </div>
         </header>
         <img class="card__imagem" src="{{ url_for('static', filename='img/gato1.jpg') }}" alt="">
         <p class="card__resumo">{{ t.resumo }}</p>
-        <a class="botao botao--contorno" href="{{ url_for('detalhe', id=loop.index0) }}">Visualizar</a>
+        <div class="card__acoes">
+          <a class="botao botao--contorno" href="{{ url_for('formulario.detalhe', id=t.id) }}">Visualizar</a>
+          {% if session.get('usuario_funcao') | lower == 'admin' %}
+            <a class="botao botao--contorno" href="{{ url_for('formulario.editar', id=t.id) }}">Editar</a>
+            <form method="POST" action="{{ url_for('formulario.excluir', id=t.id) }}" class="form-inline" onsubmit="return confirm('Deseja realmente excluir este formulário?');">
+              <button type="submit" class="botao botao--perigo">Excluir</button>
+            </form>
+          {% endif %}
+        </div>
       </article>
     {% endfor %}
   </section>
@@ -29,7 +38,7 @@
 
 <section class="chamada">
   <p>Quer adicionar algum resumo acadêmico?<br>Clique no botão abaixo!</p>
-  <a class="botao-mais" href="{{ url_for('formulario') }}" aria-label="Adicionar resumo">
+  <a class="botao-mais" href="{{ url_for('formulario.criar') }}" aria-label="Adicionar resumo">
     <svg viewBox="0 0 24 24" width="44" height="44" aria-hidden="true"><path d="M12 4v16M4 12h16" stroke="#fff" stroke-width="3.5" stroke-linecap="round" fill="none"/></svg>
   </a>
 </section>

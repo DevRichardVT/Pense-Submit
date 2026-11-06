@@ -277,3 +277,146 @@ a:focus-visible, button:focus-visible {
   .formulario__rodape { flex-direction: column; align-items: stretch; }
   .botao--principal { width: 100%; }
 }
+
+
+/* ---------- Complementos MVC (Login, Seções, Tabelas e Botões Admin) ---------- */
+.formulario--estreito {
+  max-width: 560px;
+}
+
+.formulario__secao {
+  color: var(--verde-escuro);
+  font-size: 1.35rem;
+  border-bottom: 2px solid var(--verde-escuro);
+  padding-bottom: 0.35rem;
+  margin: 2rem 0 1.25rem;
+}
+
+.formulario__acoes {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+}
+
+.formulario__link-auxiliar {
+  text-align: center;
+  margin-top: 1.25rem;
+  font-size: 1.05rem;
+}
+.formulario__link-auxiliar a {
+  color: var(--verde-escuro);
+  font-weight: 700;
+}
+
+.arquivo {
+  margin-top: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+.arquivo input[type="file"] {
+  display: none;
+}
+.botao-arquivo {
+  display: inline-block;
+  background: var(--branco);
+  color: var(--verde-oliva);
+  padding: 0.5rem 1.2rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+.botao-arquivo:hover {
+  background: var(--verde-escuro);
+  color: var(--branco);
+}
+#nome-arquivo {
+  font-size: 0.9rem;
+  color: #333;
+}
+
+.card__submeta {
+  margin: 0.15rem 0 0;
+  font-size: 0.85rem;
+  color: #444;
+}
+
+.card__acoes, .detalhe__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: center;
+  justify-content: center;
+  margin-top: auto;
+  padding: 0 1rem;
+}
+.detalhe__acoes {
+  justify-content: flex-start;
+  padding: 0;
+  margin-top: 1.5rem;
+}
+
+.detalhe__grade-info {
+  background: #f5f7f0;
+  border-left: 4px solid var(--verde-escuro);
+  padding: 0.9rem 1.2rem;
+  margin: 1rem 0 1.25rem;
+  border-radius: 6px;
+}
+.detalhe__grade-info p {
+  margin: 0.3rem 0;
+}
+
+.botao--pequeno {
+  font-size: 1rem;
+  padding: 0.45rem 1.2rem;
+}
+
+.botao--perigo {
+  background: #b42318;
+  color: var(--branco);
+  border: 1px solid #b42318;
+}
+.botao--perigo:hover {
+  background: #7a160f;
+}
+
+.form-inline {
+  display: inline;
+  margin: 0;
+}
+
+.painel-usuarios {
+  background: var(--branco);
+  padding: 2rem;
+  border-radius: var(--raio);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+}
+
+.tabela-container {
+  overflow-x: auto;
+}
+
+.tabela {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+.tabela th, .tabela td {
+  text-align: left;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #ddd;
+}
+.tabela th {
+  background: var(--verde-claro);
+  color: var(--texto);
+}
+.badge-admin {
+  display: inline-block;
+  background: var(--verde-escuro);
+  color: var(--branco);
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+}

@@ -1,4 +1,5 @@
 import os
+import sys
 from flask import Flask, flash, redirect, url_for
 import database
 from controllers import auth_bp, formulario_bp, usuario_bp
@@ -28,7 +29,9 @@ def create_app(testing: bool = False) -> Flask:
     return flask_app
 
 
-app = create_app(testing=os.environ.get("FLASK_TESTING") == "1")
+app = create_app(
+    testing=os.environ.get("FLASK_TESTING") == "1" or "pytest" in sys.modules
+)
 
 if __name__ == "__main__":
     app.run(debug=True)

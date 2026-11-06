@@ -7,10 +7,31 @@
     <img class="detalhe__avatar" src="{{ url_for('static', filename='img/gato1.jpg') }}" alt="">
     <div>
       <h1>{{ t.titulo }}</h1>
-      <p class="detalhe__meta">{{ t.modalidade }} - {{ t.autor }} ({{ t.campus }})</p>
+      <p class="detalhe__meta">{{ t.modalidade }} — {{ t.autor_nome }} ({{ t.instituicao_nome }})</p>
     </div>
   </header>
+
+  <div class="detalhe__grade-info">
+    <p><strong>Autor:</strong> {{ t.autor_nome }} ({{ t.autor_email }})</p>
+    <p><strong>Área do Autor / Cidade:</strong> {{ t.autor_area }} — {{ t.autor_cidade }}</p>
+    <p><strong>Instituição:</strong> {{ t.instituicao_nome }} ({{ t.instituicao_cidade }})</p>
+    <p><strong>Área do Conhecimento:</strong> {{ t.area_conhecimento }}</p>
+    <p><strong>Palavras-chave:</strong> {{ t.palavra_chave }}</p>
+  </div>
+
   <p class="detalhe__resumo">{{ t.resumo }}</p>
-  <a class="botao botao--contorno" href="{{ url_for('index') }}">Voltar</a>
+
+  <div class="detalhe__acoes">
+    <a class="botao botao--principal botao--pequeno" href="{{ url_for('formulario.arquivo', id=t.id) }}" target="_blank" rel="noopener">
+      Visualizar / Baixar PDF
+    </a>
+    {% if session.get('usuario_funcao') | lower == 'admin' %}
+      <a class="botao botao--contorno" href="{{ url_for('formulario.editar', id=t.id) }}">Editar</a>
+      <form method="POST" action="{{ url_for('formulario.excluir', id=t.id) }}" class="form-inline" onsubmit="return confirm('Deseja realmente excluir este formulário?');">
+        <button type="submit" class="botao botao--perigo">Excluir</button>
+      </form>
+    {% endif %}
+    <a class="botao botao--contorno" href="{{ url_for('formulario.index') }}">Voltar</a>
+  </div>
 </article>
 {% endblock %}

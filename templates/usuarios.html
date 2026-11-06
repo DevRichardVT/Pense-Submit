@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block titulo %}Gerenciar Usuários - PEnsE-Submite{% endblock %}
+
+{% block conteudo %}
+<section class="painel-usuarios">
+  <h1 class="formulario__titulo">Gerenciamento de Usuários</h1>
+
+  {% if usuarios %}
+    <div class="tabela-container">
+      <table class="tabela">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Nome</th>
+            <th>E-mail</th>
+            <th>Função Atual</th>
+            <th>Ação</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in usuarios %}
+            <tr>
+              <td>{{ u.id }}</td>
+              <td>{{ u.nome }}</td>
+              <td>{{ u.email }}</td>
+              <td><strong>{{ u.funcao }}</strong></td>
+              <td>
+                {% if u.funcao | lower != 'admin' %}
+                  <form method="POST" action="{{ url_for('usuario.promover', id=u.id) }}" class="form-inline">
+                    <button type="submit" class="botao botao--contorno">Tornar Admin</button>
+                  </form>
+                {% else %}
+                  <span class="badge-admin">Administrador</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="vazio">Nenhum usuário cadastrado.</p>
+  {% endif %}
+</section>
+{% endblock %}

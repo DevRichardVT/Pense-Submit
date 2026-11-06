@@ -1,391 +1,219 @@
 {% extends "base.html" %}
 
 {% block titulo %}
-Formulário de Submissão - PEnsE-Submite
+{{ 'Editar Submissão' if edicao else 'Formulário de Submissão' }} - PEnsE-Submite
 {% endblock %}
 
 {% block conteudo %}
-
-<style>
-
-
-    .formulario {
-        max-width: 650px;
-        margin: 35px auto;
-        padding: 30px 40px;
-        background-color: #b8b8b8;
-        border-radius: 25px;
-        box-sizing: border-box;
-    }
-
-    .formulario__titulo {
-        background-color: #ffffff;
-        color: #59683d;
-        text-align: center;
-        font-size: 26px;
-        font-weight: normal;
-
-        padding: 12px;
-        margin: -10px 0 30px 0;
-
-        border-radius: 8px;
-    }
-
-
-    .campo {
-        margin-bottom: 22px;
-    }
-
-    .campo label {
-        display: block;
-        margin-bottom: 7px;
-
-        color: #222222;
-        font-size: 18px;
-    }
-
-    .campo__entrada {
-        border-bottom: 3px solid #b4e337;
-    }
-
-    .campo__entrada input,
-    .campo__entrada textarea {
-        width: 100%;
-        padding: 8px 5px;
-
-        border: none;
-        outline: none;
-
-        background-color: transparent;
-
-        font-size: 16px;
-        font-family: inherit;
-
-        box-sizing: border-box;
-    }
-
-    .campo__entrada input::placeholder,
-    .campo__entrada textarea::placeholder {
-        color: #666666;
-    }
-
-
-    .campo__entrada textarea {
-        min-height: 90px;
-        resize: vertical;
-    }
-
-
-
-    .modalidade {
-        margin: 10px 0 22px 0;
-        padding: 0;
-
-        border: none;
-    }
-
-    .modalidade legend {
-        margin-bottom: 10px;
-
-        font-size: 18px;
-        color: #222222;
-    }
-
-    .modalidade__opcao {
-        display: block;
-
-        margin-bottom: 7px;
-
-        font-size: 16px;
-
-        cursor: pointer;
-    }
-
-    .modalidade__opcao input {
-        margin-right: 7px;
-        accent-color: #a8cf45;
-    }
-
-
-    .arquivo {
-        margin-top: 20px;
-        margin-bottom: 25px;
-
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-
-        gap: 8px;
-    }
-
-    .arquivo input[type="file"] {
-        display: none;
-    }
-
-    .botao-arquivo {
-        display: inline-block;
-
-        background-color: #ffffff;
-        color: #59683d;
-
-        padding: 8px 18px;
-
-        border-radius: 8px;
-
-        cursor: pointer;
-
-        font-size: 16px;
-
-        transition: 0.2s;
-    }
-
-    .botao-arquivo:hover {
-        background-color: #a8cf45;
-        color: #ffffff;
-    }
-
-    #nome-arquivo {
-        color: #555555;
-        font-size: 13px;
-
-        word-break: break-word;
-    }
-
-
-    .formulario__acoes {
-        display: flex;
-        justify-content: flex-end;
-
-        margin-top: 15px;
-    }
-
-    .botao--principal {
-        background-color: #ffffff;
-        color: #59683d;
-
-        border: none;
-        border-radius: 8px;
-
-        padding: 10px 30px;
-
-        font-size: 17px;
-        font-family: inherit;
-
-        cursor: pointer;
-
-        transition: 0.2s;
-    }
-
-    .botao--principal:hover {
-        background-color: #a8cf45;
-        color: #ffffff;
-    }
-
-
-    @media (max-width: 700px) {
-
-        .formulario {
-            margin: 20px 15px;
-            padding: 25px 20px;
-        }
-
-        .formulario__titulo {
-            font-size: 21px;
-        }
-
-        .formulario__acoes {
-            justify-content: center;
-        }
-    }
-
-</style>
-
-
 <section class="formulario">
+  <h1 class="formulario__titulo">
+    {{ 'Editar Submissão' if edicao else 'Formulário de Submissão' }}
+  </h1>
 
-    <h1 class="formulario__titulo">
-        Formulário de Submissão
-    </h1>
+  <form method="POST" enctype="multipart/form-data">
+    <h2 class="formulario__secao">1. Dados do Autor</h2>
 
-    <form method="POST" enctype="multipart/form-data">
+    <div class="campo">
+      <label for="autor_nome">Nome do Autor:</label>
+      <div class="campo__entrada">
+        <input
+          type="text"
+          id="autor_nome"
+          name="autor_nome"
+          maxlength="100"
+          value="{{ form_atual.get('autor_nome', '') }}"
+          placeholder="Digite o nome do autor"
+          required
+        >
+      </div>
+    </div>
 
+    <div class="campo">
+      <label for="autor_email">E-mail do Autor:</label>
+      <div class="campo__entrada">
+        <input
+          type="email"
+          id="autor_email"
+          name="autor_email"
+          maxlength="100"
+          value="{{ form_atual.get('autor_email', '') }}"
+          placeholder="Ex.: autor@ifrs.edu.br"
+          required
+        >
+      </div>
+    </div>
 
-        <div class="campo">
+    <div class="campo">
+      <label for="autor_area">Área de Atuação do Autor:</label>
+      <div class="campo__entrada">
+        <input
+          type="text"
+          id="autor_area"
+          name="autor_area"
+          maxlength="100"
+          value="{{ form_atual.get('autor_area', '') }}"
+          placeholder="Ex.: Ciência da Computação"
+          required
+        >
+      </div>
+    </div>
 
-            <label for="titulo">
-                Título do Trabalho:
-            </label>
+    <div class="campo">
+      <label for="autor_cidade">Cidade do Autor:</label>
+      <div class="campo__entrada">
+        <input
+          type="text"
+          id="autor_cidade"
+          name="autor_cidade"
+          maxlength="100"
+          value="{{ form_atual.get('autor_cidade', '') }}"
+          placeholder="Ex.: Farroupilha"
+          required
+        >
+      </div>
+    </div>
 
-            <div class="campo__entrada">
+    <h2 class="formulario__secao">2. Dados da Instituição</h2>
 
-                <input
-                    type="text"
-                    id="titulo"
-                    name="titulo"
-                    placeholder="Digite o título do trabalho"
-                    required
-                >
+    <div class="campo">
+      <label for="instituicao_nome">Nome da Instituição / Campus:</label>
+      <div class="campo__entrada">
+        <input
+          type="text"
+          id="instituicao_nome"
+          name="instituicao_nome"
+          maxlength="255"
+          value="{{ form_atual.get('instituicao_nome', '') }}"
+          placeholder="Ex.: IFRS - Campus Farroupilha"
+          required
+        >
+      </div>
+    </div>
 
-            </div>
+    <div class="campo">
+      <label for="instituicao_cidade">Cidade da Instituição:</label>
+      <div class="campo__entrada">
+        <input
+          type="text"
+          id="instituicao_cidade"
+          name="instituicao_cidade"
+          maxlength="100"
+          value="{{ form_atual.get('instituicao_cidade', '') }}"
+          placeholder="Ex.: Farroupilha"
+          required
+        >
+      </div>
+    </div>
 
-        </div>
+    <h2 class="formulario__secao">3. Dados do Trabalho</h2>
 
+    <div class="campo">
+      <label for="titulo">Título do Trabalho (máx. 50 caracteres):</label>
+      <div class="campo__entrada">
+        <input
+          type="text"
+          id="titulo"
+          name="titulo"
+          maxlength="50"
+          value="{{ form_atual.get('titulo', '') }}"
+          placeholder="Digite o título do trabalho"
+          required
+        >
+      </div>
+    </div>
 
-        <div class="campo">
+    <div class="campo">
+      <label for="palavra_chave">Palavras-chave (máx. 100 caracteres):</label>
+      <div class="campo__entrada">
+        <input
+          type="text"
+          id="palavra_chave"
+          name="palavra_chave"
+          maxlength="100"
+          value="{{ form_atual.get('palavra_chave', '') }}"
+          placeholder="Ex.: educação, tecnologia, sustentabilidade"
+          required
+        >
+      </div>
+    </div>
 
-            <label for="autor">
-                Nome do Autor:
-            </label>
+    <div class="campo">
+      <label for="area_conhecimento">Área do Conhecimento:</label>
+      <div class="campo__entrada">
+        <input
+          type="text"
+          id="area_conhecimento"
+          name="area_conhecimento"
+          maxlength="255"
+          value="{{ form_atual.get('area_conhecimento', '') }}"
+          placeholder="Ex.: Ciências Exatas e da Terra"
+          required
+        >
+      </div>
+    </div>
 
-            <div class="campo__entrada">
+    <div class="campo">
+      <label for="resumo">Resumo:</label>
+      <div class="campo__entrada campo__entrada--area">
+        <textarea
+          id="resumo"
+          name="resumo"
+          placeholder="Digite o resumo do trabalho"
+          required
+        >{{ form_atual.get('resumo', '') }}</textarea>
+      </div>
+    </div>
 
-                <input
-                    type="text"
-                    id="autor"
-                    name="autor"
-                    placeholder="Digite o nome do autor"
-                    required
-                >
+    <fieldset class="modalidade">
+      <legend>Modalidade:</legend>
+      {% for mod in modalidades %}
+        <label class="modalidade__opcao">
+          <input
+            type="radio"
+            name="modalidade_id"
+            value="{{ mod.id }}"
+            {% if (form_atual.get('modalidade_id') | string) == (mod.id | string) %}checked{% endif %}
+            required
+          >
+          {{ mod.descricao }}
+        </label>
+      {% endfor %}
+    </fieldset>
 
-            </div>
+    <div class="arquivo">
+      <label for="arquivo" class="botao-arquivo">
+        {{ 'Substituir PDF (opcional)' if edicao else 'Adicionar arquivo PDF' }}
+      </label>
+      <input
+        type="file"
+        id="arquivo"
+        name="arquivo"
+        accept=".pdf"
+        {% if not edicao %}required{% endif %}
+      >
+      <span id="nome-arquivo">
+        {{ 'Arquivo atual mantido caso nenhum novo seja selecionado' if edicao else 'Nenhum arquivo selecionado' }}
+      </span>
+    </div>
 
-        </div>
-
-
-        <div class="campo">
-
-            <label for="campus">
-                Campus/Instituição:
-            </label>
-
-            <div class="campo__entrada">
-
-                <input
-                    type="text"
-                    id="campus"
-                    name="campus"
-                    placeholder="Ex.: IFRS - Campus Caxias do Sul"
-                    required
-                >
-
-            </div>
-
-        </div>
-
-
-        <div class="campo">
-
-            <label for="resumo">
-                Resumo:
-            </label>
-
-            <div class="campo__entrada">
-
-                <textarea
-                    id="resumo"
-                    name="resumo"
-                    placeholder="Digite o resumo do trabalho"
-                    required
-                ></textarea>
-
-            </div>
-
-        </div>
-
-
-        <fieldset class="modalidade">
-
-            <legend>
-                Modalidade:
-            </legend>
-
-            {% for modalidade in modalidades %}
-
-                <label class="modalidade__opcao">
-
-                    <input
-                        type="radio"
-                        name="modalidade"
-                        value="{{ modalidade }}"
-                        required
-                    >
-
-                    {{ modalidade }}
-
-                </label>
-
-            {% endfor %}
-
-        </fieldset>
-
-
-        <div class="arquivo">
-
-            <label
-                for="arquivo"
-                class="botao-arquivo"
-            >
-                Adicionar arquivo
-            </label>
-
-            <input
-                type="file"
-                id="arquivo"
-                name="arquivo"
-                accept=".pdf"
-            >
-
-            <span id="nome-arquivo">
-                Nenhum arquivo selecionado
-            </span>
-
-        </div>
-
-
-        <div class="formulario__acoes">
-
-            <button
-                type="submit"
-                class="botao botao--principal"
-            >
-                ENVIAR
-            </button>
-
-        </div>
-
-    </form>
-
+    <div class="formulario__acoes">
+      <button type="submit" class="botao botao--principal">
+        {{ 'SALVAR ALTERAÇÕES' if edicao else 'ENVIAR' }}
+      </button>
+    </div>
+  </form>
 </section>
 
-
 <script>
+  const arquivo = document.getElementById("arquivo");
+  const nomeArquivo = document.getElementById("nome-arquivo");
 
-    const arquivo =
-        document.getElementById("arquivo");
-
-    const nomeArquivo =
-        document.getElementById("nome-arquivo");
-
-
-    arquivo.addEventListener(
-        "change",
-        function () {
-
-            if (arquivo.files.length > 0) {
-
-                nomeArquivo.textContent =
-                    arquivo.files[0].name;
-
-            } else {
-
-                nomeArquivo.textContent =
-                    "Nenhum arquivo selecionado";
-
-            }
-
-        }
-    );
-
+  arquivo.addEventListener("change", function () {
+    if (arquivo.files.length > 0) {
+      nomeArquivo.textContent = arquivo.files[0].name;
+    } else {
+      nomeArquivo.textContent = "Nenhum arquivo selecionado";
+    }
+  });
 </script>
-
 {% endblock %}

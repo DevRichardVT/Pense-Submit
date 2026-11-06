@@ -89,3 +89,44 @@ def test_submissao_rejeita_arquivo_nao_pdf():
             content_type="multipart/form-data",
         )
     assert resp.status_code == 400
+
+
+def test_submissao_erro_preserva_campos_autor_e_instituicao():
+    with patch("database.init_db"):
+        app = create_app(testing=True)
+    client = app.test_client()
+    with client.session_transaction() as sess:
+        sess["usuario_id"] = 2
+        sess["usuario_nome"] = "Normal"
+        sess["usuario_funcao"] = "normal"
+
+    with patch(
+        "controllers.formulario_controller.Modalidade.listar_todas",
+        return_value=[{"id": 1, "descricao": "Pesquisa"}],
+    ), patch(
+        "controllers.formulario_controller.Modalidade.buscar_por_id",
+        return_value={"id": 1, "descricao": "Pesquisa"},
+    ):
+        resp = client.post(
+            "/formulario",
+            data={
+                "autor_nome": "Maria Silva",
+                "autor_email": "maria@ifrs.edu.br",
+                "autor_area": "Biologia",
+                "autor_cidade": "Bento Gonçalves",
+                "instituicao_nome": "IFRS - Campus Bento",
+                "instituicao_cidade": "Bento Gonçalves",
+                "titulo": "Título válido",
+                "palavra_chave": "bio",
+                "area_conhecimento": "Ciências Biológicas",
+                "modalidade_id": "1",
+                "resumo": "Resumo...",
+                "arquivo": (io.BytesIO(b"invalido"), "notas.txt"),
+            },
+            content_type="multipart/form-data",
+        )
+
+    html = resp.get_data(as_text=True)
+    assert resp.status_code == 400
+    assert "Maria Silva" in html
+    assert "IFRS - Campus Bento" in html

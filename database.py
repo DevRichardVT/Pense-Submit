@@ -1,4 +1,5 @@
 import os
+from contextlib import contextmanager
 import psycopg2
 from dotenv import load_dotenv
 
@@ -51,18 +52,24 @@ CREATE TABLE IF NOT EXISTS formularios (
 """
 
 
+@contextmanager
 def get_connection():
-    """Retorna uma conexão ativa com o banco PostgreSQL."""
+    """Gerencia uma conexão PostgreSQL garantindo o fechamento ao sair do bloco with."""
     database_url = os.environ.get("DATABASE_URL")
     if database_url:
-        return psycopg2.connect(database_url)
-    return psycopg2.connect(
-        host=os.environ.get("DB_HOST", "localhost"),
-        port=os.environ.get("DB_PORT", "5432"),
-        dbname=os.environ.get("DB_NAME", "pense_submit"),
-        user=os.environ.get("DB_USER", "postgres"),
-        password=os.environ.get("DB_PASSWORD", "postgres"),
-    )
+        conn = psycopg2.connect(database_url)
+    else:
+        conn = psycopg2.connect(
+            host=os.environ.get("DB_HOST", "localhost"),
+            port=os.environ.get("DB_PORT", "5432"),
+            dbname=os.environ.get("DB_NAME", "pense_submit"),
+            user=os.environ.get("DB_USER", "postgres"),
+            password=os.environ.get("DB_PASSWORD", "postgres"),
+        )
+    try:
+        yield conn
+    finally:
+        conn.close()
 
 
 def init_db() -> None:

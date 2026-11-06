@@ -54,6 +54,24 @@ def _extrair_dados_requisicao(req):
     return dados_autor, dados_instituicao, dados_form
 
 
+def _montar_estado_formulario(
+    dados_autor: dict, dados_instituicao: dict, dados_form: dict, base: dict | None = None
+) -> dict:
+    estado = dict(base or {})
+    estado.update(dados_form)
+    estado.update(
+        {
+            "autor_nome": dados_autor.get("nome", ""),
+            "autor_email": dados_autor.get("email", ""),
+            "autor_area": dados_autor.get("area", ""),
+            "autor_cidade": dados_autor.get("cidade", ""),
+            "instituicao_nome": dados_instituicao.get("nome", ""),
+            "instituicao_cidade": dados_instituicao.get("cidade", ""),
+        }
+    )
+    return estado
+
+
 @formulario_bp.route("/")
 @login_required
 def index():
@@ -81,7 +99,9 @@ def criar():
                     "formulario.html",
                     modalidades=modalidades,
                     edicao=False,
-                    form_atual={**dados_form, **dados_autor, **dados_instituicao},
+                    form_atual=_montar_estado_formulario(
+                        dados_autor, dados_instituicao, dados_form
+                    ),
                 ),
                 400,
             )
@@ -101,7 +121,9 @@ def criar():
                     "formulario.html",
                     modalidades=modalidades,
                     edicao=False,
-                    form_atual={**dados_form, **dados_autor, **dados_instituicao},
+                    form_atual=_montar_estado_formulario(
+                        dados_autor, dados_instituicao, dados_form
+                    ),
                 ),
                 400,
             )
@@ -163,7 +185,9 @@ def editar(id: int):
                     "formulario.html",
                     modalidades=modalidades,
                     edicao=True,
-                    form_atual={**trabalho, **dados_form},
+                    form_atual=_montar_estado_formulario(
+                        dados_autor, dados_instituicao, dados_form, base=trabalho
+                    ),
                 ),
                 400,
             )
@@ -186,7 +210,9 @@ def editar(id: int):
                     "formulario.html",
                     modalidades=modalidades,
                     edicao=True,
-                    form_atual={**trabalho, **dados_form},
+                    form_atual=_montar_estado_formulario(
+                        dados_autor, dados_instituicao, dados_form, base=trabalho
+                    ),
                 ),
                 400,
             )

@@ -20,3 +20,12 @@ def test_init_db_executes_schema_and_seed():
     assert "CREATE TABLE IF NOT EXISTS instituicoes" in executed_sql
     assert "CREATE TABLE IF NOT EXISTS formularios" in executed_sql
     assert mock_conn.commit.called
+
+
+def test_get_connection_closes_connection_on_context_exit():
+    raw_conn = MagicMock()
+    with patch("database.psycopg2.connect", return_value=raw_conn):
+        with database.get_connection() as conn:
+            assert conn is raw_conn
+
+    assert raw_conn.close.called

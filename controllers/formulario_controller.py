@@ -173,7 +173,13 @@ def criar():
         return redirect(url_for("formulario.index"))
 
     return render_template(
-        "formulario.html", modalidades=modalidades, edicao=False, form_atual={}
+        "formulario.html",
+        modalidades=modalidades,
+        edicao=False,
+        form_atual={
+            "autor_nome": session.get("usuario_nome", ""),
+            "autor_email": session.get("usuario_email", ""),
+        },
     )
 
 
@@ -309,3 +315,18 @@ def excluir(id: int):
     else:
         flash("Trabalho não encontrado.")
     return redirect(url_for("formulario.index"))
+
+
+@formulario_bp.route("/trabalho/<int:id>/status", methods=["POST"])
+@admin_required
+def atualizar_status(id: int):
+    novo_status = request.form.get("status_avaliacao", "").strip()
+    try:
+        atualizado = Formulario.atualizar_status(id, novo_status)
+        if atualizado:
+            flash(f"Status atualizado para '{novo_status}'!")
+        else:
+            flash("Trabalho não encontrado.")
+    except ValueError as erro:
+        flash(str(erro))
+    return redirect(url_for("formulario.detalhe", id=id))

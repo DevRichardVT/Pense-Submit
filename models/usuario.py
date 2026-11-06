@@ -1,28 +1,39 @@
+from werkzeug.security import check_password_hash, generate_password_hash
 from database import get_connection
 from models.arquivo import Arquivo
 
 
 class Usuario:
     @staticmethod
+    def _verificar_senha(senha_banco: str | None, senha_informada: str) -> bool:
+        if senha_banco is None:
+            return False
+        s = str(senha_banco)
+        if s.startswith(("pbkdf2:", "scrypt:")):
+            return check_password_hash(s, senha_informada)
+        return s == senha_informada
+
+    @staticmethod
     def autenticar(email: str, senha: str) -> dict | None:
         with get_connection() as conn:
             with conn.cursor() as cur:
                 cur.execute(
                     """
-                    SELECT u.id, u.nome, u.email, u.funcao_id, f.descricao, u.foto_arquivo_id, COALESCE(u.ativo, TRUE)
+                    SELECT u.id, u.nome, u.email, u.funcao_id, f.descricao, u.foto_arquivo_id, COALESCE(u.ativo, TRUE), u.senha
                     FROM usuarios u
                     JOIN funcoes f ON f.id = u.funcao_id
                     WHERE LOWER(u.email) = LOWER(%s)
-                      AND u.senha = %s
                       AND COALESCE(u.ativo, TRUE) = TRUE
                     LIMIT 1;
                     """,
-                    (email.strip(), senha),
+                    (email.strip(),),
                 )
                 row = cur.fetchone()
                 if not row:
                     return None
                 if len(row) > 6 and not row[6]:
+                    return None
+                if len(row) > 7 and not Usuario._verificar_senha(row[7], senha):
                     return None
                 return {
                     "id": row[0],
@@ -48,6 +59,8 @@ class Usuario:
             raise ValueError("Nome e e-mail devem ter no máximo 100 caracteres.")
         if len(senha) > 20:
             raise ValueError("A senha deve ter no máximo 20 caracteres.")
+
+        senha_hash = generate_password_hash(senha, method="pbkdf2:sha256")
 
         with get_connection() as conn:
             with conn.cursor() as cur:
@@ -95,7 +108,7 @@ class Usuario:
                     VALUES (%s, %s, %s, %s, %s, TRUE)
                     RETURNING id;
                     """,
-                    (funcao_id, nome, email, senha, foto_arquivo_id),
+                    (funcao_id, nome, email, senha_hash, foto_arquivo_id),
                 )
                 novo_id = cur.fetchone()[0]
             conn.commit()
@@ -158,12 +171,15 @@ class Usuario:
         usuario_id: int,
         nome: str,
         foto: tuple[str, str, bytes] | None = None,
+        nova_senha: str | None = None,
     ) -> dict:
         nome = (nome or "").strip()
         if not nome:
             raise ValueError("O nome do usuário é obrigatório.")
         if len(nome) > 100:
             raise ValueError("O nome deve ter no máximo 100 caracteres.")
+        if nova_senha and len(nova_senha) > 20:
+            raise ValueError("A senha deve ter no máximo 20 caracteres.")
 
         with get_connection() as conn:
             with conn.cursor() as cur:
@@ -178,30 +194,33 @@ class Usuario:
                 if cur.fetchone():
                     raise ValueError("Nome de usuário já cadastrado.")
 
+                campos = ["nome = %s"]
+                valores: list = [nome]
+
                 if foto is not None:
                     nome_foto, content_type, dados_foto = foto
                     foto_arquivo_id = Arquivo.criar(
                         cur, nome_foto, content_type, dados_foto
                     )
-                    cur.execute(
-                        """
-                        UPDATE usuarios
-                        SET nome = %s, foto_arquivo_id = %s
-                        WHERE id = %s
-                        RETURNING id, nome, foto_arquivo_id;
-                        """,
-                        (nome, foto_arquivo_id, usuario_id),
+                    campos.append("foto_arquivo_id = %s")
+                    valores.append(foto_arquivo_id)
+
+                if nova_senha:
+                    campos.append("senha = %s")
+                    valores.append(
+                        generate_password_hash(nova_senha, method="pbkdf2:sha256")
                     )
-                else:
-                    cur.execute(
-                        """
-                        UPDATE usuarios
-                        SET nome = %s
-                        WHERE id = %s
-                        RETURNING id, nome, foto_arquivo_id;
-                        """,
-                        (nome, usuario_id),
-                    )
+
+                valores.append(usuario_id)
+                cur.execute(
+                    f"""
+                    UPDATE usuarios
+                    SET {', '.join(campos)}
+                    WHERE id = %s
+                    RETURNING id, nome, foto_arquivo_id;
+                    """,
+                    tuple(valores),
+                )
                 row = cur.fetchone()
                 if not row:
                     raise ValueError("Usuário não encontrado.")

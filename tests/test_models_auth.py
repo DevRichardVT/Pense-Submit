@@ -107,3 +107,13 @@ def test_usuario_atualizar_perfil_e_definir_ativo():
 
     assert atualizado == {"id": 3, "nome": "Maria Editada", "foto_arquivo_id": 90}
     assert ok_status is True
+
+
+def test_usuario_verifica_senha_hash_e_texto_legado():
+    from werkzeug.security import generate_password_hash
+
+    h = generate_password_hash("segredo123", method="pbkdf2:sha256")
+    assert Usuario._verificar_senha(h, "segredo123") is True
+    assert Usuario._verificar_senha(h, "errada") is False
+    assert Usuario._verificar_senha("legado123", "legado123") is True
+    assert Usuario._verificar_senha("legado123", "outra") is False

@@ -128,12 +128,15 @@ class Formulario:
                         f.usuario_id,
                         u.foto_arquivo_id AS usuario_foto_id,
                         f.arquivo_id,
-                        f.imagem_arquivo_id
+                        f.imagem_arquivo_id,
+                        COALESCE(f.status_avaliacao, 'Em análise') AS status_avaliacao,
+                        COALESCE(arq.content_type, 'application/pdf') AS arquivo_content_type
                     FROM formularios f
                     JOIN modalidades_formularios m ON m.id = f.modalidade_id
                     JOIN autores a ON a.id = f.autor_id
                     JOIN instituicoes i ON i.id = f.instituicao_id
                     LEFT JOIN usuarios u ON u.id = f.usuario_id
+                    LEFT JOIN arquivos arq ON arq.id = f.arquivo_id
                     ORDER BY f.id DESC;
                     """
                 )
@@ -165,12 +168,15 @@ class Formulario:
                         f.usuario_id,
                         u.foto_arquivo_id AS usuario_foto_id,
                         f.arquivo_id,
-                        f.imagem_arquivo_id
+                        f.imagem_arquivo_id,
+                        COALESCE(f.status_avaliacao, 'Em análise') AS status_avaliacao,
+                        COALESCE(arq.content_type, 'application/pdf') AS arquivo_content_type
                     FROM formularios f
                     JOIN modalidades_formularios m ON m.id = f.modalidade_id
                     JOIN autores a ON a.id = f.autor_id
                     JOIN instituicoes i ON i.id = f.instituicao_id
                     LEFT JOIN usuarios u ON u.id = f.usuario_id
+                    LEFT JOIN arquivos arq ON arq.id = f.arquivo_id
                     WHERE f.id = %s
                     LIMIT 1;
                     """,
@@ -277,6 +283,21 @@ class Formulario:
             return atualizado
 
     @staticmethod
+    def atualizar_status(form_id: int, novo_status: str) -> bool:
+        status_limpo = (novo_status or "").strip()
+        if status_limpo not in ("Em análise", "Aprovado", "Correção"):
+            raise ValueError("Status de avaliação inválido.")
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "UPDATE formularios SET status_avaliacao = %s WHERE id = %s;",
+                    (status_limpo, form_id),
+                )
+                atualizado = cur.rowcount > 0
+            conn.commit()
+            return atualizado
+
+    @staticmethod
     def excluir(form_id: int) -> bool:
         with get_connection() as conn:
             with conn.cursor() as cur:
@@ -309,4 +330,8 @@ class Formulario:
             "usuario_foto_id": r[16] if len(r) > 16 else None,
             "arquivo_id": r[17] if len(r) > 17 else None,
             "imagem_arquivo_id": r[18] if len(r) > 18 else None,
+            "status_avaliacao": (r[19] if len(r) > 19 and r[19] else "Em análise"),
+            "arquivo_content_type": (
+                r[20] if len(r) > 20 and r[20] else "application/pdf"
+            ),
         }

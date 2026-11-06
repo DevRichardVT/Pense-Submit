@@ -42,9 +42,13 @@ def editar(id: int):
 
     if request.method == "POST":
         nome = request.form.get("nome", "").strip()
+        nova_senha = request.form.get("nova_senha", "")
         try:
             foto = _ler_foto_opcional(request.files.get("foto"))
-            atualizado = Usuario.atualizar_perfil(usuario_id=id, nome=nome, foto=foto)
+            kwargs_update = {"usuario_id": id, "nome": nome, "foto": foto}
+            if nova_senha:
+                kwargs_update["nova_senha"] = nova_senha
+            atualizado = Usuario.atualizar_perfil(**kwargs_update)
         except ValueError as erro:
             flash(str(erro))
             usuario_form = dict(usuario)

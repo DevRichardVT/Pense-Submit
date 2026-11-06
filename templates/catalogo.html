@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block titulo %}Catálogo Solar 3D - PEnsE-Submite{% endblock %}
+{% block titulo %}Galeria 3D de Pôsteres - PEnsE-Submite{% endblock %}
 
 {% block conteudo %}
 {% set eh_admin = (session.get('usuario_funcao') | lower) == 'admin' %}
@@ -18,24 +18,34 @@
 <section class="catalogo-solar">
   <header class="catalogo-solar__topo">
     <div>
-      <h1 class="catalogo-solar__titulo">Sistema Solar de Trabalhos</h1>
+      <h1 class="catalogo-solar__titulo">Galeria 3D de Pôsteres Científicos</h1>
       <p class="catalogo-solar__subtitulo">
-        Arraste para girar, use o scroll para dar zoom ou clique em um planeta para viajar até o formulário.
+        Clique em qualquer pôster 3D (ou use as setas do teclado / botões) para caminhar até o trabalho na feira virtual.
       </p>
     </div>
     {% if trabalhos %}
-      <div class="catalogo-solar__controles" role="group" aria-label="Navegação entre planetas">
-        <button type="button" id="btn-planeta-ant" class="botao-solar" title="Planeta anterior">
+      <div class="catalogo-solar__controles" role="group" aria-label="Navegação na galeria 3D">
+        <input
+          type="search"
+          id="busca-solar"
+          class="catalogo-solar__input-busca"
+          placeholder="Filtrar pôsteres..."
+          aria-label="Filtrar pôsteres por título ou autor"
+        >
+        <select id="filtro-modalidade-solar" class="catalogo-solar__select" aria-label="Filtrar por modalidade">
+          <option value="todos">Todas as modalidades</option>
+          <option value="ensino">Ensino</option>
+          <option value="pesquisa">Pesquisa</option>
+          <option value="extensão">Extensão</option>
+        </select>
+        <button type="button" id="btn-planeta-ant" class="botao-solar" title="Pôster anterior (Seta Esquerda)">
           ◀ Anterior
         </button>
-        <button type="button" id="btn-visao-geral" class="botao-solar botao-solar--sol" title="Voltar para visão geral do Sol">
-          ☀ Sistema Solar
+        <button type="button" id="btn-visao-geral" class="botao-solar botao-solar--sol" title="Visão panorâmica do salão (ESC)">
+          🏛 Visão do Salão
         </button>
-        <button type="button" id="btn-planeta-prox" class="botao-solar" title="Próximo planeta">
+        <button type="button" id="btn-planeta-prox" class="botao-solar" title="Próximo pôster (Seta Direita)">
           Próximo ▶
-        </button>
-        <button type="button" id="btn-pausar-orbita" class="botao-solar" title="Pausar ou retomar movimento orbital">
-          ⏸ Pausar Órbita
         </button>
       </div>
     {% endif %}
@@ -53,6 +63,7 @@
           <img id="painel-avatar" class="card__avatar" src="" alt="">
           <div>
             <span id="painel-modalidade" class="catalogo-solar__badge"></span>
+            <span id="painel-status" class="badge-avaliacao badge-avaliacao--analise"></span>
             <h2 id="painel-titulo" class="catalogo-solar__painel-titulo"></h2>
           </div>
         </div>
@@ -89,7 +100,7 @@
       </div>
     </div>
   {% else %}
-    <p class="vazio">Nenhum trabalho submetido ainda para formar o sistema solar. <a href="{{ url_for('formulario.criar') }}">Envie o primeiro!</a></p>
+    <p class="vazio">Nenhum trabalho submetido ainda na galeria. <a href="{{ url_for('formulario.criar') }}">Envie o primeiro!</a></p>
   {% endif %}
 </section>
 
@@ -109,6 +120,7 @@
       "instituicao_nome": {{ t.instituicao_nome | tojson }},
       "instituicao_cidade": {{ t.instituicao_cidade | tojson }},
       "area_conhecimento": {{ t.area_conhecimento | tojson }},
+      "status_avaliacao": {{ t.get('status_avaliacao', 'Em análise') | tojson }},
       "avatar_url": {{ avatar_url | tojson }},
       "capa_url": {{ capa_url | tojson }},
       "url_detalhe": {{ url_for('formulario.detalhe', id=t.id) | tojson }},
@@ -136,178 +148,324 @@
   const dadosEl = document.getElementById("dados-trabalhos-solar");
   const trabalhos = dadosEl ? JSON.parse(dadosEl.textContent) : [];
   const container = document.getElementById("solar-canvas-wrap");
-  const labelsContainer = document.getElementById("solar-labels");
 
   if (container && trabalhos.length > 0) {
     const scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(0x050b14, 0.0028);
+    scene.background = new THREE.Color(0x0b131e);
+    scene.fog = new THREE.FogExp2(0x0b131e, 0.012);
 
     const camera = new THREE.PerspectiveCamera(
-      55,
+      50,
       container.clientWidth / container.clientHeight,
       0.1,
-      1000
+      500
     );
-    camera.position.set(0, 38, 68);
+    camera.position.set(0, 6.5, 22);
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(container.clientWidth, container.clientHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.setClearColor(0x050b14, 1);
+    renderer.shadowMap.enabled = true;
     container.appendChild(renderer.domElement);
 
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
-    controls.dampingFactor = 0.06;
-    controls.maxDistance = 260;
-    controls.minDistance = 6;
+    controls.dampingFactor = 0.07;
+    controls.maxPolarAngle = Math.PI / 2 - 0.03;
+    controls.minDistance = 4;
+    controls.maxDistance = 90;
+    controls.target.set(0, 3.2, 0);
 
-    // Luzes
-    scene.add(new THREE.AmbientLight(0xdbeafe, 0.75));
-    const luzSol = new THREE.PointLight(0xfff3c4, 3.2, 450, 0.4);
-    luzSol.position.set(0, 0, 0);
-    scene.add(luzSol);
+    // Iluminação do salão de exposição
+    scene.add(new THREE.AmbientLight(0xe2e8f0, 0.85));
+    const luzTopo = new THREE.DirectionalLight(0xffffff, 1.1);
+    luzTopo.position.set(12, 28, 18);
+    scene.add(luzTopo);
 
-    // Fundo de estrelas
-    const qtdEstrelas = 900;
-    const posEstrelas = new Float32Array(qtdEstrelas * 3);
-    for (let i = 0; i < qtdEstrelas * 3; i++) {
-      posEstrelas[i] = (Math.random() - 0.5) * 480;
-    }
-    const geoEstrelas = new THREE.BufferGeometry();
-    geoEstrelas.setAttribute("position", new THREE.BufferAttribute(posEstrelas, 3));
-    const matEstrelas = new THREE.PointsMaterial({
-      color: 0xffffff,
-      size: 1.1,
-      transparent: true,
-      opacity: 0.85,
-    });
-    scene.add(new THREE.Points(geoEstrelas, matEstrelas));
+    const luzFundo = new THREE.PointLight(0xaacd5e, 1.4, 80);
+    luzFundo.position.set(0, 12, -10);
+    scene.add(luzFundo);
 
-    // Sol Central (PEnsE-Submite)
-    const solGrupo = new THREE.Group();
-    const solMesh = new THREE.Mesh(
-      new THREE.SphereGeometry(5.2, 36, 36),
-      new THREE.MeshBasicMaterial({ color: 0xfacc15 })
-    );
-    const solHalo = new THREE.Mesh(
-      new THREE.SphereGeometry(6.6, 32, 32),
-      new THREE.MeshBasicMaterial({
-        color: 0xaacd5e,
-        transparent: true,
-        opacity: 0.25,
+    // Piso da galeria + grade arquitetônica
+    const piso = new THREE.Mesh(
+      new THREE.PlaneGeometry(240, 240),
+      new THREE.MeshStandardMaterial({
+        color: 0x0f172a,
+        roughness: 0.35,
+        metalness: 0.25,
       })
     );
-    solGrupo.add(solMesh);
-    solGrupo.add(solHalo);
-    scene.add(solGrupo);
+    piso.rotation.x = -Math.PI / 2;
+    scene.add(piso);
+
+    const grade = new THREE.GridHelper(160, 64, 0x005c22, 0x1e293b);
+    grade.position.y = 0.02;
+    scene.add(grade);
 
     function corPorModalidade(mod) {
       const m = (mod || "").toLowerCase();
-      if (m.includes("ensino")) return 0xaacd5e;
-      if (m.includes("pesquisa")) return 0x38bdf8;
-      if (m.includes("extens")) return 0xf59e0b;
-      return 0xa78bfa;
+      if (m.includes("ensino")) return { hex: 0xaacd5e, css: "#aacd5e", texto: "#0b131e" };
+      if (m.includes("pesquisa")) return { hex: 0x38bdf8, css: "#38bdf8", texto: "#0b131e" };
+      if (m.includes("extens")) return { hex: 0xf59e0b, css: "#f59e0b", texto: "#0b131e" };
+      return { hex: 0xa78bfa, css: "#a78bfa", texto: "#0b131e" };
     }
 
-    const textureLoader = new THREE.TextureLoader();
-    const planetas = [];
+    function quebrarLinhas(ctx, texto, maxLargura, maxLinhas) {
+      const palavras = String(texto || "").split(/\s+/);
+      const linhas = [];
+      let atual = "";
+      for (const p of palavras) {
+        const teste = atual ? atual + " " + p : p;
+        if (ctx.measureText(teste).width > maxLargura && atual) {
+          linhas.push(atual);
+          atual = p;
+          if (linhas.length >= maxLinhas) break;
+        } else {
+          atual = teste;
+        }
+      }
+      if (atual && linhas.length < maxLinhas) {
+        linhas.push(atual);
+      } else if (linhas.length === maxLinhas && palavras.length > 0) {
+        linhas[maxLinhas - 1] = linhas[maxLinhas - 1].replace(/\.*$/, "") + "...";
+      }
+      return linhas;
+    }
+
+    function criarTexturaPoster(t, corInfo, imgElemento) {
+      const canvas = document.createElement("canvas");
+      canvas.width = 600;
+      canvas.height = 840;
+      const ctx = canvas.getContext("2d");
+
+      // Fundo do pôster
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Faixa superior (Modalidade + Status)
+      ctx.fillStyle = "#005c22";
+      ctx.fillRect(0, 0, canvas.width, 74);
+
+      ctx.fillStyle = corInfo.css;
+      ctx.beginPath();
+      ctx.roundRect(24, 18, 170, 38, 19);
+      ctx.fill();
+
+      ctx.fillStyle = corInfo.texto;
+      ctx.font = "bold 20px Georgia, serif";
+      ctx.textAlign = "center";
+      ctx.fillText((t.modalidade || "Trabalho").toUpperCase(), 109, 44);
+
+      // Status de avaliação no canto direito do cabeçalho
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "bold 18px Georgia, serif";
+      ctx.textAlign = "right";
+      ctx.fillText(t.status_avaliacao || "Em análise", canvas.width - 26, 44);
+
+      // Área da imagem de capa (sem distorção - cover crop)
+      const imgX = 24;
+      const imgY = 92;
+      const imgW = canvas.width - 48;
+      const imgH = 290;
+      ctx.fillStyle = "#e2e8f0";
+      ctx.fillRect(imgX, imgY, imgW, imgH);
+
+      if (imgElemento && imgElemento.width > 0 && imgElemento.height > 0) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(imgX, imgY, imgW, imgH);
+        ctx.clip();
+        const escala = Math.max(imgW / imgElemento.width, imgH / imgElemento.height);
+        const dw = imgElemento.width * escala;
+        const dh = imgElemento.height * escala;
+        const dx = imgX + (imgW - dw) / 2;
+        const dy = imgY + (imgH - dh) / 2;
+        ctx.drawImage(imgElemento, dx, dy, dw, dh);
+        ctx.restore();
+      }
+
+      // Título do trabalho
+      ctx.fillStyle = "#111827";
+      ctx.font = "bold 28px Georgia, serif";
+      ctx.textAlign = "left";
+      const linhasTitulo = quebrarLinhas(ctx, t.titulo, imgW, 2);
+      let cursorY = 428;
+      linhasTitulo.forEach(function (l) {
+        ctx.fillText(l, 28, cursorY);
+        cursorY += 34;
+      });
+
+      // Autor e Instituição
+      cursorY += 6;
+      ctx.fillStyle = "#005c22";
+      ctx.font = "bold 21px Georgia, serif";
+      ctx.fillText(t.autor_nome || "", 28, cursorY);
+
+      cursorY += 28;
+      ctx.fillStyle = "#4b5563";
+      ctx.font = "19px Georgia, serif";
+      const instTexto = (t.instituicao_nome || "") + " (" + (t.instituicao_cidade || "") + ")";
+      ctx.fillText(instTexto.slice(0, 48), 28, cursorY);
+
+      // Linha divisória
+      cursorY += 20;
+      ctx.strokeStyle = "#aacd5e";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(28, cursorY);
+      ctx.lineTo(canvas.width - 28, cursorY);
+      ctx.stroke();
+
+      // Resumo
+      cursorY += 32;
+      ctx.fillStyle = "#1f2937";
+      ctx.font = "19px Georgia, serif";
+      const linhasResumo = quebrarLinhas(ctx, t.resumo, imgW - 8, 7);
+      linhasResumo.forEach(function (l) {
+        ctx.fillText(l, 28, cursorY);
+        cursorY += 27;
+      });
+
+      // Rodapé do pôster
+      ctx.fillStyle = "#f1f5f9";
+      ctx.fillRect(0, canvas.height - 54, canvas.width, 54);
+      ctx.fillStyle = "#005c22";
+      ctx.font = "bold 18px Georgia, serif";
+      ctx.textAlign = "center";
+      ctx.fillText("Clique no pôster para inspecionar e abrir o documento", canvas.width / 2, canvas.height - 20);
+
+      const textura = new THREE.CanvasTexture(canvas);
+      textura.colorSpace = THREE.SRGBColorSpace;
+      return textura;
+    }
+
+    const posteres = [];
     const meshesClicaveis = [];
 
     trabalhos.forEach(function (t, idx) {
-      const raioOrbita = 14 + idx * 9.5;
-      const anguloInicial = (idx * 2.39996) % (Math.PI * 2);
-      const velocidade = (0.0038 / (1 + idx * 0.22)) * (idx % 2 === 0 ? 1 : -0.85);
-      const corHex = corPorModalidade(t.modalidade);
+      const corInfo = corPorModalidade(t.modalidade);
+      const grupo = new THREE.Group();
 
-      // Linha da órbita
-      const ptsOrbita = [];
-      const segmentos = 96;
-      for (let s = 0; s <= segmentos; s++) {
-        const a = (s / segmentos) * Math.PI * 2;
-        ptsOrbita.push(new THREE.Vector3(Math.cos(a) * raioOrbita, 0, Math.sin(a) * raioOrbita));
-      }
-      const linhaOrbita = new THREE.LineLoop(
-        new THREE.BufferGeometry().setFromPoints(ptsOrbita),
-        new THREE.LineBasicMaterial({ color: corHex, transparent: true, opacity: 0.28 })
-      );
-      scene.add(linhaOrbita);
-
-      // Grupo do Planeta
-      const grupoPlaneta = new THREE.Group();
-      const matPlaneta = new THREE.MeshStandardMaterial({
-        color: 0xffffff,
-        roughness: 0.45,
-        metalness: 0.1,
-        emissive: new THREE.Color(corHex),
-        emissiveIntensity: 0.18,
-      });
-
-      textureLoader.load(
-        t.capa_url,
-        function (tex) {
-          tex.colorSpace = THREE.SRGBColorSpace;
-          matPlaneta.map = tex;
-          matPlaneta.needsUpdate = true;
-        },
-        undefined,
-        function () {
-          matPlaneta.color = new THREE.Color(corHex);
-        }
-      );
-
-      const esfera = new THREE.Mesh(new THREE.SphereGeometry(2.35, 32, 32), matPlaneta);
-      esfera.userData = { indicePlaneta: idx };
-      grupoPlaneta.add(esfera);
-      meshesClicaveis.push(esfera);
-
-      // Anel orbital do planeta
-      const anel = new THREE.Mesh(
-        new THREE.RingGeometry(2.9, 3.55, 40),
-        new THREE.MeshBasicMaterial({
-          color: corHex,
-          side: THREE.DoubleSide,
-          transparent: true,
-          opacity: 0.65,
+      // Totem / Moldura 3D
+      const moldura = new THREE.Mesh(
+        new THREE.BoxGeometry(4.6, 6.4, 0.22),
+        new THREE.MeshStandardMaterial({
+          color: 0x1e293b,
+          roughness: 0.4,
+          metalness: 0.3,
         })
       );
-      anel.rotation.x = Math.PI / 2.4;
-      grupoPlaneta.add(anel);
+      moldura.position.y = 3.6;
+      grupo.add(moldura);
 
-      scene.add(grupoPlaneta);
+      // Borda luminosa da modalidade
+      const borda = new THREE.Mesh(
+        new THREE.BoxGeometry(4.76, 6.56, 0.16),
+        new THREE.MeshBasicMaterial({ color: corInfo.hex })
+      );
+      borda.position.set(0, 3.6, -0.02);
+      grupo.add(borda);
 
-      // Rótulo flutuante HTML
-      const labelEl = document.createElement("button");
-      labelEl.type = "button";
-      labelEl.className = "solar-label";
-      labelEl.textContent = t.titulo;
-      labelEl.addEventListener("click", function () {
-        selecionarPlaneta(idx);
-      });
-      labelsContainer.appendChild(labelEl);
+      // Pedestal
+      const pedestal = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.18, 0.28, 0.9, 16),
+        new THREE.MeshStandardMaterial({ color: 0x475569, metalness: 0.5, roughness: 0.3 })
+      );
+      pedestal.position.y = 0.45;
+      grupo.add(pedestal);
 
-      planetas.push({
+      // Placa frontal com o conteúdo do pôster
+      const texturaInicial = criarTexturaPoster(t, corInfo, null);
+      const matPlaca = new THREE.MeshBasicMaterial({ map: texturaInicial });
+      const placa = new THREE.Mesh(new THREE.PlaneGeometry(4.3, 6.02), matPlaca);
+      placa.position.set(0, 3.6, 0.12);
+      placa.userData = { indicePoster: idx };
+      moldura.userData = { indicePoster: idx };
+      grupo.add(placa);
+
+      meshesClicaveis.push(placa, moldura);
+
+      // Carrega a imagem de capa real no pôster
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = function () {
+        const novaTex = criarTexturaPoster(t, corInfo, img);
+        matPlaca.map.dispose();
+        matPlaca.map = novaTex;
+        matPlaca.needsUpdate = true;
+      };
+      img.src = t.capa_url;
+
+      scene.add(grupo);
+
+      posteres.push({
         dados: t,
-        grupo: grupoPlaneta,
-        esfera: esfera,
-        anel: anel,
-        labelEl: labelEl,
-        raioOrbita: raioOrbita,
-        angulo: anguloInicial,
-        velocidade: velocidade,
+        grupo: grupo,
+        borda: borda,
+        corInfo: corInfo,
+        visivel: true,
+        posAlvo: new THREE.Vector3(),
+        dirFrente: new THREE.Vector3(0, 0, 1),
       });
     });
 
+    // Posiciona os pôsteres visíveis em um salão em arco / galeria
+    function organizarGaleria() {
+      const ativos = posteres.filter(function (p) { return p.visivel; });
+      const n = ativos.length;
+      if (n === 0) return;
+
+      const espacamento = 6.2;
+      const porFileira = Math.max(5, Math.ceil(Math.sqrt(n) * 2.2));
+
+      ativos.forEach(function (p, i) {
+        const fileira = Math.floor(i / porFileira);
+        const indiceNaFileira = i % porFileira;
+        const totalNaFileira = Math.min(porFileira, n - fileira * porFileira);
+
+        if (totalNaFileira <= 7 && fileira === 0) {
+          // Arco semicircular suave voltado para o visitante
+          const raio = Math.max(11, totalNaFileira * 2.5);
+          const abertura = Math.min(Math.PI * 0.78, Math.max(0.45, (totalNaFileira - 1) * 0.34));
+          const ang = totalNaFileira === 1
+            ? 0
+            : -abertura / 2 + (indiceNaFileira / (totalNaFileira - 1)) * abertura;
+
+          const x = Math.sin(ang) * raio;
+          const z = -Math.cos(ang) * raio + raio * 0.45;
+          p.grupo.position.set(x, 0, z);
+          p.grupo.lookAt(0, 0, z + raio);
+
+          const frente = new THREE.Vector3(0, 0, 1).applyQuaternion(p.grupo.quaternion).normalize();
+          p.posAlvo.set(x, 3.6, z);
+          p.dirFrente.copy(frente);
+        } else {
+          // Aléia de exposição em fileiras curvas
+          const offsetCentral = indiceNaFileira - (totalNaFileira - 1) / 2;
+          const x = offsetCentral * espacamento;
+          const z = -fileira * 12 + Math.abs(offsetCentral) * 0.65;
+          p.grupo.position.set(x, 0, z);
+          p.grupo.rotation.set(0, -offsetCentral * 0.06, 0);
+
+          const frente = new THREE.Vector3(0, 0, 1).applyQuaternion(p.grupo.quaternion).normalize();
+          p.posAlvo.set(x, 3.6, z);
+          p.dirFrente.copy(frente);
+        }
+      });
+    }
+
+    organizarGaleria();
+
     // Estado de seleção e câmera
     let indiceSelecionado = -1;
-    let orbitaPausada = false;
-    const alvoCameraDesejado = new THREE.Vector3(0, 0, 0);
-    let offsetCameraDesejado = null;
+    let destinoCamera = null;
+    let destinoTarget = null;
 
     const painel = document.getElementById("solar-painel");
     const painelCapa = document.getElementById("painel-capa");
     const painelAvatar = document.getElementById("painel-avatar");
     const painelModalidade = document.getElementById("painel-modalidade");
+    const painelStatus = document.getElementById("painel-status");
     const painelTitulo = document.getElementById("painel-titulo");
     const painelAutor = document.getElementById("painel-autor");
     const painelInst = document.getElementById("painel-instituicao");
@@ -323,6 +481,16 @@
       painelAvatar.src = t.avatar_url;
       painelAvatar.alt = "Avatar de " + t.autor_nome;
       painelModalidade.textContent = t.modalidade;
+      if (painelStatus) {
+        painelStatus.textContent = t.status_avaliacao || "Em análise";
+        painelStatus.className =
+          "badge-avaliacao badge-avaliacao--" +
+          (t.status_avaliacao === "Aprovado"
+            ? "aprovado"
+            : t.status_avaliacao === "Correção"
+            ? "correcao"
+            : "analise");
+      }
       painelTitulo.textContent = t.titulo;
       painelAutor.textContent = "Autor(a): " + t.autor_nome;
       painelInst.textContent = "Instituição: " + t.instituicao_nome + " (" + t.instituicao_cidade + ")";
@@ -339,46 +507,94 @@
       painel.hidden = false;
     }
 
-    function selecionarPlaneta(idx) {
-      if (planetas.length === 0) return;
-      indiceSelecionado = ((idx % planetas.length) + planetas.length) % planetas.length;
-      const p = planetas[indiceSelecionado];
+    function indicesVisiveis() {
+      const lista = [];
+      posteres.forEach(function (p, i) {
+        if (p.visivel) lista.push(i);
+      });
+      return lista;
+    }
+
+    function focarPoster(idx) {
+      const p = posteres[idx];
+      if (!p || !p.visivel) return;
+      indiceSelecionado = idx;
       preencherPainel(p.dados);
 
-      planetas.forEach(function (item, i) {
-        item.labelEl.classList.toggle("ativo", i === indiceSelecionado);
+      posteres.forEach(function (item, i) {
+        item.borda.scale.setScalar(i === idx ? 1.04 : 1.0);
       });
 
-      offsetCameraDesejado = new THREE.Vector3(0, 4.5, 11.5);
+      destinoTarget = p.posAlvo.clone();
+      destinoCamera = p.posAlvo.clone().addScaledVector(p.dirFrente, 8.2);
+      destinoCamera.y = 3.7;
     }
 
-    function voltarVisaoGeral() {
+    function voltarVisaoSalao() {
       indiceSelecionado = -1;
       painel.hidden = true;
-      alvoCameraDesejado.set(0, 0, 0);
-      offsetCameraDesejado = new THREE.Vector3(0, 38, 68);
-      planetas.forEach(function (item) {
-        item.labelEl.classList.remove("ativo");
+      destinoTarget = new THREE.Vector3(0, 3.2, 0);
+      destinoCamera = new THREE.Vector3(0, 7.2, 22);
+      posteres.forEach(function (item) {
+        item.borda.scale.setScalar(1.0);
       });
     }
 
-    // Botões HUD
+    function navegarRelativo(passo) {
+      const visiveis = indicesVisiveis();
+      if (visiveis.length === 0) return;
+      const posAtual = visiveis.indexOf(indiceSelecionado);
+      const novaPos =
+        posAtual === -1
+          ? 0
+          : ((posAtual + passo) % visiveis.length + visiveis.length) % visiveis.length;
+      focarPoster(visiveis[novaPos]);
+    }
+
     document.getElementById("btn-planeta-ant")?.addEventListener("click", function () {
-      selecionarPlaneta(indiceSelecionado <= 0 ? planetas.length - 1 : indiceSelecionado - 1);
+      navegarRelativo(-1);
     });
     document.getElementById("btn-planeta-prox")?.addEventListener("click", function () {
-      selecionarPlaneta(indiceSelecionado + 1);
+      navegarRelativo(1);
     });
-    document.getElementById("btn-visao-geral")?.addEventListener("click", voltarVisaoGeral);
-    document.getElementById("btn-fechar-painel")?.addEventListener("click", voltarVisaoGeral);
+    document.getElementById("btn-visao-geral")?.addEventListener("click", voltarVisaoSalao);
+    document.getElementById("btn-fechar-painel")?.addEventListener("click", voltarVisaoSalao);
 
-    const btnPausar = document.getElementById("btn-pausar-orbita");
-    btnPausar?.addEventListener("click", function () {
-      orbitaPausada = !orbitaPausada;
-      btnPausar.textContent = orbitaPausada ? "▶ Retomar Órbita" : "⏸ Pausar Órbita";
+    window.addEventListener("keydown", function (e) {
+      if (e.target && (e.target.tagName === "INPUT" || e.target.tagName === "SELECT")) return;
+      if (e.key === "ArrowLeft") navegarRelativo(-1);
+      if (e.key === "ArrowRight") navegarRelativo(1);
+      if (e.key === "Escape") voltarVisaoSalao();
     });
 
-    // Clique 3D nos planetas com Raycaster
+    // Busca e filtro por modalidade
+    const inputBuscaSolar = document.getElementById("busca-solar");
+    const selectModSolar = document.getElementById("filtro-modalidade-solar");
+    function filtrarPosteres() {
+      const termo = (inputBuscaSolar ? inputBuscaSolar.value : "").trim().toLowerCase();
+      const mod = (selectModSolar ? selectModSolar.value : "todos").toLowerCase();
+      posteres.forEach(function (p) {
+        const texto = (
+          p.dados.titulo +
+          " " +
+          p.dados.autor_nome +
+          " " +
+          p.dados.instituicao_nome +
+          " " +
+          p.dados.area_conhecimento
+        ).toLowerCase();
+        const bateMod = mod === "todos" || (p.dados.modalidade || "").toLowerCase().includes(mod);
+        const bateTermo = !termo || texto.includes(termo);
+        p.visivel = bateMod && bateTermo;
+        p.grupo.visible = p.visivel;
+      });
+      organizarGaleria();
+      voltarVisaoSalao();
+    }
+    inputBuscaSolar?.addEventListener("input", filtrarPosteres);
+    selectModSolar?.addEventListener("change", filtrarPosteres);
+
+    // Clique 3D nos pôsteres com Raycaster
     const raycaster = new THREE.Raycaster();
     const ponteiro = new THREE.Vector2();
     let downPos = { x: 0, y: 0 };
@@ -395,10 +611,11 @@
       ponteiro.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
       raycaster.setFromCamera(ponteiro, camera);
       const hits = raycaster.intersectObjects(meshesClicaveis, false);
-      if (hits.length > 0) {
-        const idx = hits[0].object.userData.indicePlaneta;
-        if (typeof idx === "number") {
-          selecionarPlaneta(idx);
+      for (const hit of hits) {
+        const idx = hit.object.userData.indicePoster;
+        if (typeof idx === "number" && posteres[idx]?.visivel) {
+          focarPoster(idx);
+          break;
         }
       }
     });
@@ -410,55 +627,17 @@
       renderer.setSize(container.clientWidth, container.clientHeight);
     });
 
-    const tempV = new THREE.Vector3();
-
     function animar() {
       requestAnimationFrame(animar);
 
-      solMesh.rotation.y += 0.004;
-      solHalo.rotation.y -= 0.002;
-
-      planetas.forEach(function (p, i) {
-        if (!orbitaPausada && i !== indiceSelecionado) {
-          p.angulo += p.velocidade;
-        }
-        const x = Math.cos(p.angulo) * p.raioOrbita;
-        const z = Math.sin(p.angulo) * p.raioOrbita;
-        p.grupo.position.set(x, 0, z);
-        p.esfera.rotation.y += 0.012;
-        p.anel.rotation.z += 0.005;
-
-        // Projeção 2D do rótulo
-        tempV.set(x, 3.4, z);
-        tempV.project(camera);
-        if (tempV.z > 1) {
-          p.labelEl.style.display = "none";
-        } else {
-          const lx = (tempV.x * 0.5 + 0.5) * container.clientWidth;
-          const ly = (-(tempV.y * 0.5) + 0.5) * container.clientHeight;
-          p.labelEl.style.display = "block";
-          p.labelEl.style.transform = `translate(-50%, -50%) translate(${lx}px, ${ly}px)`;
-        }
-      });
-
-      if (indiceSelecionado >= 0 && planetas[indiceSelecionado]) {
-        const posPlaneta = planetas[indiceSelecionado].grupo.position;
-        alvoCameraDesejado.copy(posPlaneta);
-        controls.target.lerp(alvoCameraDesejado, 0.08);
-        if (offsetCameraDesejado) {
-          const destinoCam = posPlaneta.clone().add(offsetCameraDesejado);
-          camera.position.lerp(destinoCam, 0.06);
-          if (camera.position.distanceTo(destinoCam) < 0.4) {
-            offsetCameraDesejado = null;
-          }
-        }
-      } else {
-        controls.target.lerp(alvoCameraDesejado, 0.08);
-        if (offsetCameraDesejado) {
-          camera.position.lerp(offsetCameraDesejado, 0.06);
-          if (camera.position.distanceTo(offsetCameraDesejado) < 0.8) {
-            offsetCameraDesejado = null;
-          }
+      if (destinoTarget) {
+        controls.target.lerp(destinoTarget, 0.09);
+      }
+      if (destinoCamera) {
+        camera.position.lerp(destinoCamera, 0.08);
+        if (camera.position.distanceTo(destinoCamera) < 0.08) {
+          destinoCamera = null;
+          destinoTarget = null;
         }
       }
 

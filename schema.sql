@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
     funcao_id INTEGER NOT NULL REFERENCES funcoes(id),
     nome VARCHAR(100) NOT NULL,
     email VARCHAR(100) NOT NULL,
-    senha VARCHAR(20) NOT NULL,
+    senha VARCHAR(255) NOT NULL,
     foto_arquivo_id INTEGER REFERENCES arquivos(id) ON DELETE SET NULL,
     ativo BOOLEAN NOT NULL DEFAULT TRUE
 );
@@ -53,7 +53,8 @@ CREATE TABLE IF NOT EXISTS formularios (
     resumo TEXT NOT NULL,
     arquivo BYTEA,
     palavra_chave VARCHAR(100) NOT NULL,
-    area_conhecimento VARCHAR(255) NOT NULL
+    area_conhecimento VARCHAR(255) NOT NULL,
+    status_avaliacao VARCHAR(30) NOT NULL DEFAULT 'Em análise'
 );
 
 -- Seed inicial de funções e modalidades

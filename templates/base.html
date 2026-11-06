@@ -11,14 +11,26 @@
 </head>
 <body>
   <header class="topo">
-    <a href="{{ url_for('index') }}" class="topo__logo">
+    <a href="{{ url_for('formulario.index') if session.get('usuario_id') else url_for('auth.login') }}" class="topo__logo">
       <img src="{{ url_for('static', filename='img/logo-pense.png') }}" alt="PEnsE">
     </a>
     <nav class="topo__menu" aria-label="Principal">
-      <a href="{{ url_for('index') }}"
-         class="{{ 'ativo' if request.endpoint in ('index', 'detalhe') }}">INÍCIO</a>
-      <a href="{{ url_for('formulario') }}"
-         class="{{ 'ativo' if request.endpoint == 'formulario' }}">FORMULÁRIO</a>
+      {% if session.get('usuario_id') %}
+        <a href="{{ url_for('formulario.index') }}"
+           class="{{ 'ativo' if request.endpoint in ('formulario.index', 'formulario.detalhe') }}">INÍCIO</a>
+        <a href="{{ url_for('formulario.criar') }}"
+           class="{{ 'ativo' if request.endpoint in ('formulario.criar', 'formulario.editar') }}">FORMULÁRIO</a>
+        {% if session.get('usuario_funcao') | lower == 'admin' %}
+          <a href="{{ url_for('usuario.listar') }}"
+             class="{{ 'ativo' if request.endpoint == 'usuario.listar' }}">USUÁRIOS</a>
+        {% endif %}
+        <a href="{{ url_for('auth.logout') }}">SAIR ({{ session.get('usuario_nome') }})</a>
+      {% else %}
+        <a href="{{ url_for('auth.login') }}"
+           class="{{ 'ativo' if request.endpoint == 'auth.login' }}">LOGIN</a>
+        <a href="{{ url_for('auth.cadastro') }}"
+           class="{{ 'ativo' if request.endpoint == 'auth.cadastro' }}">CADASTRO</a>
+      {% endif %}
     </nav>
   </header>
 

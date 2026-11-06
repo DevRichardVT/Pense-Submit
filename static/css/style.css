@@ -1124,6 +1124,281 @@ button:disabled {
   background: var(--branco);
 }
 
+/* ---------- Showcase 3D Full-Page Estilo shader.se + Locomotive ---------- */
+.conteudo:has(.shader-stage) {
+  max-width: none;
+  width: 100%;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+.shader-stage {
+  position: relative;
+  flex: 1;
+  width: 100%;
+  min-height: calc(100vh - 148px);
+  background: radial-gradient(circle at 50% 35%, #ffffff 0%, #f2f5ea 62%, #e3ecd0 100%);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.shader-hud-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 1.1rem 2.5%;
+  background: linear-gradient(180deg, rgba(242, 245, 234, 0.94) 0%, rgba(242, 245, 234, 0) 100%);
+  pointer-events: none;
+}
+.shader-hud-top > * {
+  pointer-events: auto;
+}
+.shader-hud-top__left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.shader-brand__tag {
+  display: block;
+  font-family: monospace;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--verde-oliva);
+}
+.shader-brand__titulo {
+  margin: 0;
+  font-size: clamp(1.15rem, 2.2vw, 1.55rem);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--verde-escuro);
+}
+.shader-hud-top__controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.shader-input,
+.shader-select {
+  padding: 0.48rem 0.9rem;
+  border: 2px solid var(--verde-escuro);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--texto);
+  font-family: monospace;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+.shader-input:focus,
+.shader-select:focus {
+  outline: none;
+  background: var(--branco);
+  box-shadow: 3px 3px 0 var(--verde-escuro);
+}
+.shader-btn {
+  padding: 0.48rem 0.9rem;
+  border: 2px solid var(--verde-escuro);
+  border-radius: 6px;
+  background: var(--branco);
+  color: var(--verde-escuro);
+  font-family: monospace;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 2px 2px 0 var(--verde-escuro);
+  transition: transform 0.12s ease, background 0.12s ease, color 0.12s ease;
+}
+.shader-btn:hover {
+  background: var(--verde-escuro);
+  color: var(--branco);
+  transform: translate(-1px, -1px);
+}
+.shader-btn--destaque {
+  background: var(--verde-claro);
+  color: var(--texto);
+}
+.shader-btn.ativo {
+  background: var(--verde-escuro);
+  color: var(--branco);
+}
+.shader-modes {
+  display: inline-flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+.shader-bg-type {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  transform: translateY(-54%);
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 1;
+  user-select: none;
+}
+.shader-bg-type__track {
+  display: flex;
+  white-space: nowrap;
+  gap: 2.5rem;
+  font-size: clamp(4rem, 11vw, 9rem);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: rgba(0, 92, 34, 0.07);
+  will-change: transform;
+}
+.shader-canvas-full {
+  position: relative;
+  z-index: 2;
+  flex: 1;
+  width: 100%;
+  height: calc(100vh - 148px);
+  min-height: 540px;
+}
+.shader-canvas-full canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: grab;
+}
+.shader-canvas-full canvas:active {
+  cursor: grabbing;
+}
+.shader-hud-bottom {
+  position: absolute;
+  left: 2.5%;
+  right: 2.5%;
+  bottom: 1.1rem;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+  pointer-events: none;
+}
+.shader-hud-bottom__counter {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: rgba(255, 255, 255, 0.92);
+  border: 2px solid var(--verde-escuro);
+  box-shadow: 3px 3px 0 var(--verde-escuro);
+  border-radius: 6px;
+  padding: 0.4rem 0.9rem;
+  font-family: monospace;
+  font-size: 0.88rem;
+  color: var(--texto);
+}
+.shader-bracket {
+  color: var(--verde-escuro);
+  font-weight: 700;
+}
+#loco-contador {
+  color: var(--verde-escuro);
+  font-weight: 700;
+}
+#loco-titulo-ativo {
+  font-family: var(--fonte);
+  font-size: 0.92rem;
+  max-width: 260px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-left: 0.35rem;
+}
+.shader-hud-bottom__bar {
+  flex: 1 1 160px;
+  max-width: 320px;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.85);
+  border: 2px solid var(--verde-escuro);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.shader-hud-bottom__fill {
+  height: 100%;
+  width: 20%;
+  background: var(--verde-escuro);
+  transition: width 0.12s ease-out;
+}
+.shader-hud-bottom__legend {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  flex-wrap: wrap;
+  background: rgba(255, 255, 255, 0.92);
+  border: 2px solid var(--verde-escuro);
+  box-shadow: 3px 3px 0 var(--verde-escuro);
+  border-radius: 6px;
+  padding: 0.4rem 0.9rem;
+  font-family: monospace;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--texto);
+}
+.shader-hint {
+  color: var(--verde-oliva);
+  border-left: 2px solid #cbd5e1;
+  padding-left: 0.75rem;
+}
+.shader-drawer {
+  position: absolute;
+  top: 5.2rem;
+  right: 2.5%;
+  bottom: 4.5rem;
+  width: min(380px, calc(100% - 2rem));
+  background: rgba(255, 255, 255, 0.97);
+  border: 2px solid var(--verde-escuro);
+  box-shadow: 6px 6px 0 var(--verde-escuro);
+  border-radius: 10px;
+  padding: 1.1rem;
+  overflow-y: auto;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.shader-drawer[hidden] {
+  display: none !important;
+}
+.shader-drawer__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 2px solid #e2e8f0;
+  padding-bottom: 0.45rem;
+}
+.shader-drawer__close {
+  width: 30px;
+  height: 30px;
+  border: 2px solid var(--verde-escuro);
+  border-radius: 6px;
+  background: var(--branco);
+  color: var(--verde-escuro);
+  font-weight: 700;
+  cursor: pointer;
+}
+.shader-drawer__close:hover {
+  background: #b42318;
+  border-color: #b42318;
+  color: var(--branco);
+}
+.shader-empty {
+  margin: auto;
+  padding: 3rem;
+}
+
 /* ---------- Responsivo ---------- */
 @media (max-width: 900px) {
   .topo {

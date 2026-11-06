@@ -1,4 +1,5 @@
 from database import get_connection
+from models.arquivo import Arquivo
 
 
 class Usuario:
@@ -8,7 +9,7 @@ class Usuario:
             with conn.cursor() as cur:
                 cur.execute(
                     """
-                    SELECT u.id, u.nome, u.email, u.funcao_id, f.descricao
+                    SELECT u.id, u.nome, u.email, u.funcao_id, f.descricao, u.foto_arquivo_id
                     FROM usuarios u
                     JOIN funcoes f ON f.id = u.funcao_id
                     WHERE LOWER(u.email) = LOWER(%s) AND u.senha = %s
@@ -25,10 +26,16 @@ class Usuario:
                     "email": row[2],
                     "funcao_id": row[3],
                     "funcao": row[4],
+                    "foto_arquivo_id": row[5] if len(row) > 5 else None,
                 }
 
     @staticmethod
-    def criar(nome: str, email: str, senha: str) -> int:
+    def criar(
+        nome: str,
+        email: str,
+        senha: str,
+        foto: tuple[str, str, bytes] | None = None,
+    ) -> int:
         nome = (nome or "").strip()
         email = (email or "").strip()
         if not nome or not email or not senha:
@@ -59,13 +66,20 @@ class Usuario:
                 else:
                     funcao_id = funcao_row[0]
 
+                foto_arquivo_id = None
+                if foto is not None:
+                    nome_foto, content_type, dados_foto = foto
+                    foto_arquivo_id = Arquivo.criar(
+                        cur, nome_foto, content_type, dados_foto
+                    )
+
                 cur.execute(
                     """
-                    INSERT INTO usuarios (funcao_id, nome, email, senha)
-                    VALUES (%s, %s, %s, %s)
+                    INSERT INTO usuarios (funcao_id, nome, email, senha, foto_arquivo_id)
+                    VALUES (%s, %s, %s, %s, %s)
                     RETURNING id;
                     """,
-                    (funcao_id, nome, email, senha),
+                    (funcao_id, nome, email, senha, foto_arquivo_id),
                 )
                 novo_id = cur.fetchone()[0]
             conn.commit()
@@ -77,7 +91,7 @@ class Usuario:
             with conn.cursor() as cur:
                 cur.execute(
                     """
-                    SELECT u.id, u.nome, u.email, u.funcao_id, f.descricao
+                    SELECT u.id, u.nome, u.email, u.funcao_id, f.descricao, u.foto_arquivo_id
                     FROM usuarios u
                     JOIN funcoes f ON f.id = u.funcao_id
                     ORDER BY u.id ASC;
@@ -90,6 +104,7 @@ class Usuario:
                         "email": r[2],
                         "funcao_id": r[3],
                         "funcao": r[4],
+                        "foto_arquivo_id": r[5] if len(r) > 5 else None,
                     }
                     for r in cur.fetchall()
                 ]

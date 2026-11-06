@@ -9,23 +9,24 @@
 {% if trabalhos %}
   <section class="grade">
     {% for t in trabalhos %}
+      {% set foto_url = url_for('formulario.ver_arquivo', id=t.usuario_foto_id) if t.usuario_foto_id else url_for('static', filename='img/gato1.jpg') %}
       <article class="card">
         <header class="card__topo">
-          <img class="card__avatar" src="{{ url_for('static', filename='img/gato1.jpg') }}" alt="">
-          <div>
+          <img class="card__avatar" src="{{ foto_url }}" alt="Avatar de {{ t.autor_nome }}">
+          <div class="card__cabecalho-texto">
             <h2 class="card__titulo">{{ t.titulo }}</h2>
             <p class="card__meta">{{ t.modalidade }} - {{ t.autor_nome }}</p>
             <p class="card__submeta">{{ t.instituicao_nome }} ({{ t.instituicao_cidade }})</p>
           </div>
         </header>
-        <img class="card__imagem" src="{{ url_for('static', filename='img/gato1.jpg') }}" alt="">
+        <img class="card__imagem" src="{{ foto_url }}" alt="Foto de {{ t.autor_nome }}">
         <p class="card__resumo">{{ t.resumo }}</p>
         <div class="card__acoes">
           <a class="botao botao--contorno" href="{{ url_for('formulario.detalhe', id=t.id) }}">Visualizar</a>
           {% if session.get('usuario_funcao') | lower == 'admin' %}
             <a class="botao botao--contorno" href="{{ url_for('formulario.editar', id=t.id) }}">Editar</a>
             <form method="POST" action="{{ url_for('formulario.excluir', id=t.id) }}" class="form-inline" onsubmit="return confirm('Deseja realmente excluir este formulário?');">
-              <button type="submit" class="botao botao--perigo">Excluir</button>
+              <button type="submit" class="botao botao--perigo" data-keep-text="true">Excluir</button>
             </form>
           {% endif %}
         </div>

@@ -6,7 +6,7 @@
 <section class="formulario formulario--estreito">
   <h1 class="formulario__titulo">Criar Conta</h1>
 
-  <form method="POST" action="{{ url_for('auth.cadastro') }}">
+  <form method="POST" action="{{ url_for('auth.cadastro') }}" enctype="multipart/form-data">
     <div class="campo">
       <label for="nome">Nome Completo:</label>
       <div class="campo__entrada">
@@ -28,6 +28,22 @@
       </div>
     </div>
 
+    <div class="arquivo">
+      <label for="foto" class="botao-arquivo">
+        Adicionar foto de perfil (opcional)
+      </label>
+      <input
+        type="file"
+        id="foto"
+        name="foto"
+        accept=".jpg,.jpeg,.png,.webp,.gif,image/*"
+      >
+      <div class="cadastro-preview">
+        <img id="preview-foto" class="card__avatar" src="{{ url_for('static', filename='img/gato1.jpg') }}" alt="Pré-visualização do avatar">
+        <span id="nome-foto">Nenhuma foto selecionada (usará avatar padrão)</span>
+      </div>
+    </div>
+
     <div class="formulario__acoes">
       <button type="submit" class="botao botao--principal">CADASTRAR</button>
     </div>
@@ -37,4 +53,28 @@
     Já tem conta? <a href="{{ url_for('auth.login') }}">Faça login</a>
   </p>
 </section>
+
+<script>
+  const inputFoto = document.getElementById("foto");
+  const nomeFoto = document.getElementById("nome-foto");
+  const previewFoto = document.getElementById("preview-foto");
+
+  if (inputFoto) {
+    inputFoto.addEventListener("change", function () {
+      if (inputFoto.files && inputFoto.files.length > 0) {
+        const file = inputFoto.files[0];
+        nomeFoto.textContent = file.name;
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          if (e.target && e.target.result) {
+            previewFoto.src = e.target.result;
+          }
+        };
+        reader.readAsDataURL(file);
+      } else {
+        nomeFoto.textContent = "Nenhuma foto selecionada (usará avatar padrão)";
+      }
+    });
+  }
+</script>
 {% endblock %}

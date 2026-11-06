@@ -1,7 +1,37 @@
 from flask import Blueprint, flash, redirect, render_template, request, session, url_for
+from werkzeug.utils import secure_filename
 from models.usuario import Usuario
 
 auth_bp = Blueprint("auth", __name__)
+
+EXTENSOES_IMAGEM = {
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".webp": "image/webp",
+    ".gif": "image/gif",
+}
+
+
+def _ler_foto_opcional(arquivo_foto) -> tuple[str, str, bytes] | None:
+    if not arquivo_foto or not arquivo_foto.filename:
+        return None
+
+    nome_seguro = secure_filename(arquivo_foto.filename)
+    ext = ""
+    if "." in nome_seguro:
+        ext = "." + nome_seguro.rsplit(".", 1)[1].lower()
+
+    if ext not in EXTENSOES_IMAGEM:
+        raise ValueError(
+            "A foto deve ser uma imagem válida (.jpg, .jpeg, .png, .webp ou .gif)."
+        )
+
+    dados = arquivo_foto.read()
+    if not dados:
+        raise ValueError("O arquivo de imagem enviado está vazio.")
+
+    return nome_seguro, EXTENSOES_IMAGEM[ext], dados
 
 
 @auth_bp.route("/login", methods=["GET", "POST"])
@@ -27,6 +57,7 @@ def login():
         session["usuario_nome"] = usuario["nome"]
         session["usuario_email"] = usuario["email"]
         session["usuario_funcao"] = usuario["funcao"]
+        session["usuario_foto_id"] = usuario.get("foto_arquivo_id")
         flash(f"Bem-vindo(a), {usuario['nome']}!")
         return redirect(url_for("formulario.index"))
 
@@ -44,7 +75,8 @@ def cadastro():
         senha = request.form.get("senha", "")
 
         try:
-            Usuario.criar(nome=nome, email=email, senha=senha)
+            foto = _ler_foto_opcional(request.files.get("foto"))
+            Usuario.criar(nome=nome, email=email, senha=senha, foto=foto)
         except ValueError as erro:
             flash(str(erro))
             return render_template("cadastro.html"), 400

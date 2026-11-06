@@ -39,13 +39,15 @@ class Formulario:
         arquivo_bytes: bytes,
         nome_arquivo: str = "trabalho.pdf",
         usuario_id: int | None = None,
+        content_type_arquivo: str = "application/pdf",
+        imagem: tuple[str, str, bytes] | None = None,
     ) -> int:
         autor_limpo = Autor.validar_dados(dados_autor)
         inst_limpa = Instituicao.validar_dados(dados_instituicao)
         form_limpo = Formulario._validar_dados_form(dados_form)
 
         if not arquivo_bytes:
-            raise ValueError("O envio do arquivo PDF é obrigatório.")
+            raise ValueError("O envio do arquivo do documento é obrigatório.")
 
         with get_connection() as conn:
             with conn.cursor() as cur:
@@ -64,16 +66,23 @@ class Formulario:
                 arquivo_id = Arquivo.criar(
                     cur,
                     nome_arquivo or f"{form_limpo['titulo']}.pdf",
-                    "application/pdf",
+                    content_type_arquivo or "application/pdf",
                     arquivo_bytes,
                 )
+                imagem_arquivo_id = None
+                if imagem is not None:
+                    nome_img, tipo_img, bytes_img = imagem
+                    imagem_arquivo_id = Arquivo.criar(
+                        cur, nome_img, tipo_img, bytes_img
+                    )
+
                 cur.execute(
                     """
                     INSERT INTO formularios (
-                        usuario_id, autor_id, modalidade_id, instituicao_id, arquivo_id,
+                        usuario_id, autor_id, modalidade_id, instituicao_id, arquivo_id, imagem_arquivo_id,
                         titulo, resumo, arquivo, palavra_chave, area_conhecimento
                     )
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                     RETURNING id;
                     """,
                     (
@@ -82,6 +91,7 @@ class Formulario:
                         form_limpo["modalidade_id"],
                         instituicao_id,
                         arquivo_id,
+                        imagem_arquivo_id,
                         form_limpo["titulo"],
                         form_limpo["resumo"],
                         psycopg2.Binary(arquivo_bytes),
@@ -117,7 +127,8 @@ class Formulario:
                         i.cidade AS instituicao_cidade,
                         f.usuario_id,
                         u.foto_arquivo_id AS usuario_foto_id,
-                        f.arquivo_id
+                        f.arquivo_id,
+                        f.imagem_arquivo_id
                     FROM formularios f
                     JOIN modalidades_formularios m ON m.id = f.modalidade_id
                     JOIN autores a ON a.id = f.autor_id
@@ -153,7 +164,8 @@ class Formulario:
                         i.cidade AS instituicao_cidade,
                         f.usuario_id,
                         u.foto_arquivo_id AS usuario_foto_id,
-                        f.arquivo_id
+                        f.arquivo_id,
+                        f.imagem_arquivo_id
                     FROM formularios f
                     JOIN modalidades_formularios m ON m.id = f.modalidade_id
                     JOIN autores a ON a.id = f.autor_id
@@ -170,12 +182,12 @@ class Formulario:
                 return Formulario._row_to_dict(row)
 
     @staticmethod
-    def buscar_arquivo(form_id: int) -> tuple[bytes, str] | None:
+    def buscar_arquivo(form_id: int) -> tuple | None:
         with get_connection() as conn:
             with conn.cursor() as cur:
                 cur.execute(
                     """
-                    SELECT COALESCE(arq.dados, f.arquivo), f.titulo
+                    SELECT COALESCE(arq.dados, f.arquivo), f.titulo, arq.nome, arq.content_type
                     FROM formularios f
                     LEFT JOIN arquivos arq ON arq.id = f.arquivo_id
                     WHERE f.id = %s
@@ -186,6 +198,8 @@ class Formulario:
                 row = cur.fetchone()
                 if not row or row[0] is None:
                     return None
+                if len(row) >= 4:
+                    return bytes(row[0]), row[1], row[2], row[3]
                 return bytes(row[0]), row[1]
 
     @staticmethod
@@ -196,6 +210,8 @@ class Formulario:
         dados_form: dict,
         arquivo_bytes: bytes | None = None,
         nome_arquivo: str = "trabalho.pdf",
+        content_type_arquivo: str = "application/pdf",
+        imagem: tuple[str, str, bytes] | None = None,
     ) -> bool:
         autor_limpo = Autor.validar_dados(dados_autor)
         inst_limpa = Instituicao.validar_dados(dados_instituicao)
@@ -215,64 +231,47 @@ class Formulario:
                     inst_limpa["nome"],
                     inst_limpa["cidade"],
                 )
+
+                campos_sql = [
+                    "autor_id = %s",
+                    "modalidade_id = %s",
+                    "instituicao_id = %s",
+                    "titulo = %s",
+                    "resumo = %s",
+                    "palavra_chave = %s",
+                    "area_conhecimento = %s",
+                ]
+                valores = [
+                    autor_id,
+                    form_limpo["modalidade_id"],
+                    instituicao_id,
+                    form_limpo["titulo"],
+                    form_limpo["resumo"],
+                    form_limpo["palavra_chave"],
+                    form_limpo["area_conhecimento"],
+                ]
+
                 if arquivo_bytes is not None:
                     arquivo_id = Arquivo.criar(
                         cur,
                         nome_arquivo or f"{form_limpo['titulo']}.pdf",
-                        "application/pdf",
+                        content_type_arquivo or "application/pdf",
                         arquivo_bytes,
                     )
-                    cur.execute(
-                        """
-                        UPDATE formularios
-                        SET autor_id = %s,
-                            modalidade_id = %s,
-                            instituicao_id = %s,
-                            arquivo_id = %s,
-                            titulo = %s,
-                            resumo = %s,
-                            arquivo = %s,
-                            palavra_chave = %s,
-                            area_conhecimento = %s
-                        WHERE id = %s;
-                        """,
-                        (
-                            autor_id,
-                            form_limpo["modalidade_id"],
-                            instituicao_id,
-                            arquivo_id,
-                            form_limpo["titulo"],
-                            form_limpo["resumo"],
-                            psycopg2.Binary(arquivo_bytes),
-                            form_limpo["palavra_chave"],
-                            form_limpo["area_conhecimento"],
-                            form_id,
-                        ),
-                    )
-                else:
-                    cur.execute(
-                        """
-                        UPDATE formularios
-                        SET autor_id = %s,
-                            modalidade_id = %s,
-                            instituicao_id = %s,
-                            titulo = %s,
-                            resumo = %s,
-                            palavra_chave = %s,
-                            area_conhecimento = %s
-                        WHERE id = %s;
-                        """,
-                        (
-                            autor_id,
-                            form_limpo["modalidade_id"],
-                            instituicao_id,
-                            form_limpo["titulo"],
-                            form_limpo["resumo"],
-                            form_limpo["palavra_chave"],
-                            form_limpo["area_conhecimento"],
-                            form_id,
-                        ),
-                    )
+                    campos_sql.extend(["arquivo_id = %s", "arquivo = %s"])
+                    valores.extend([arquivo_id, psycopg2.Binary(arquivo_bytes)])
+
+                if imagem is not None:
+                    nome_img, tipo_img, bytes_img = imagem
+                    imagem_id = Arquivo.criar(cur, nome_img, tipo_img, bytes_img)
+                    campos_sql.append("imagem_arquivo_id = %s")
+                    valores.append(imagem_id)
+
+                valores.append(form_id)
+                cur.execute(
+                    f"UPDATE formularios SET {', '.join(campos_sql)} WHERE id = %s;",
+                    tuple(valores),
+                )
                 atualizado = cur.rowcount > 0
             conn.commit()
             return atualizado
@@ -309,4 +308,5 @@ class Formulario:
             "usuario_id": r[15] if len(r) > 15 else None,
             "usuario_foto_id": r[16] if len(r) > 16 else None,
             "arquivo_id": r[17] if len(r) > 17 else None,
+            "imagem_arquivo_id": r[18] if len(r) > 18 else None,
         }

@@ -77,3 +77,33 @@ def test_usuario_atualizar_funcao():
 
     assert ok is True
     assert mock_conn.commit.called
+
+
+def test_usuario_criar_rejeita_nome_duplicado():
+    mock_conn = MagicMock()
+    mock_cur = MagicMock()
+    mock_conn.__enter__.return_value = mock_conn
+    mock_conn.cursor.return_value.__enter__.return_value = mock_cur
+    mock_cur.fetchone.return_value = ("Maria", "outro@ifrs.edu.br")
+
+    with patch("models.usuario.get_connection", return_value=mock_conn):
+        with pytest.raises(ValueError, match="Nome de usuário já cadastrado"):
+            Usuario.criar("Maria", "novo@ifrs.edu.br", "123456")
+
+
+def test_usuario_atualizar_perfil_e_definir_ativo():
+    mock_conn = MagicMock()
+    mock_cur = MagicMock()
+    mock_conn.__enter__.return_value = mock_conn
+    mock_conn.cursor.return_value.__enter__.return_value = mock_cur
+    mock_cur.fetchone.side_effect = [None, (90,), (3, "Maria Editada", 90)]
+    mock_cur.rowcount = 1
+
+    with patch("models.usuario.get_connection", return_value=mock_conn):
+        atualizado = Usuario.atualizar_perfil(
+            3, "Maria Editada", foto=("nova.png", "image/png", b"\x89PNG...")
+        )
+        ok_status = Usuario.definir_ativo(3, False)
+
+    assert atualizado == {"id": 3, "nome": "Maria Editada", "foto_arquivo_id": 90}
+    assert ok_status is True

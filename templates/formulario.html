@@ -27,7 +27,15 @@
 
   <p id="wizard-erro" class="aviso aviso--erro" role="alert" hidden></p>
 
-  <form id="form-wizard" method="POST" enctype="multipart/form-data">
+  <form
+    id="form-wizard"
+    method="POST"
+    enctype="multipart/form-data"
+    data-confirm-title="{{ 'Salvar alterações?' if edicao else 'Enviar trabalho?' }}"
+    data-confirm-text="{{ 'Deseja salvar as alterações deste trabalho?' if edicao else 'Deseja confirmar o envio deste trabalho acadêmico?' }}"
+    data-confirm-icon="question"
+    data-confirm-btn="{{ 'Salvar' if edicao else 'Enviar' }}"
+  >
     <!-- Etapa 1: Autores -->
     <div class="wizard-etapa ativa" data-step="1">
       <h2 class="formulario__secao">1. Dados do Autor</h2>
@@ -207,17 +215,32 @@
 
       <div class="arquivo">
         <label for="arquivo" class="botao-arquivo">
-          {{ 'Substituir PDF (opcional)' if edicao else 'Adicionar arquivo PDF' }}
+          {{ 'Substituir documento (opcional, máx. 10 MB)' if edicao else 'Adicionar documento (PDF, DOCX, ODT, PPTX, XLSX - máx. 10 MB)' }}
         </label>
         <input
           type="file"
           id="arquivo"
           name="arquivo"
-          accept=".pdf"
+          accept=".pdf,.doc,.docx,.odt,.rtf,.ppt,.pptx,.xls,.xlsx"
           {% if not edicao %}required{% endif %}
         >
         <span id="nome-arquivo">
-          {{ 'Arquivo atual mantido caso nenhum novo seja selecionado' if edicao else 'Nenhum arquivo selecionado' }}
+          {{ 'Documento atual mantido caso nenhum novo seja selecionado' if edicao else 'Nenhum documento selecionado' }}
+        </span>
+      </div>
+
+      <div class="arquivo">
+        <label for="imagem" class="botao-arquivo">
+          {{ 'Substituir imagem do card (opcional, máx. 10 MB)' if edicao else 'Adicionar imagem de capa do card (opcional, máx. 10 MB)' }}
+        </label>
+        <input
+          type="file"
+          id="imagem"
+          name="imagem"
+          accept=".jpg,.jpeg,.png,.webp,.gif,image/*"
+        >
+        <span id="nome-imagem">
+          {{ 'Imagem atual mantida caso nenhuma nova seja selecionada' if edicao else 'Nenhuma imagem selecionada (usará capa padrão)' }}
         </span>
       </div>
     </div>
@@ -238,6 +261,7 @@
 
 <script>
   (function () {
+    const MAX_BYTES = 10 * 1024 * 1024;
     const form = document.getElementById("form-wizard");
     const etapas = Array.from(document.querySelectorAll(".wizard-etapa"));
     const indicadores = Array.from(document.querySelectorAll(".wizard-passo"));
@@ -247,6 +271,8 @@
     const msgErro = document.getElementById("wizard-erro");
     const arquivo = document.getElementById("arquivo");
     const nomeArquivo = document.getElementById("nome-arquivo");
+    const imagem = document.getElementById("imagem");
+    const nomeImagem = document.getElementById("nome-imagem");
 
     let etapaAtual = 1;
     const totalEtapas = etapas.length;
@@ -254,10 +280,33 @@
     if (arquivo) {
       arquivo.addEventListener("change", function () {
         if (arquivo.files && arquivo.files.length > 0) {
+          if (arquivo.files[0].size > MAX_BYTES) {
+            mostrarErro("O documento deve ter no máximo 10 MB.");
+            arquivo.value = "";
+            nomeArquivo.textContent = "Nenhum documento selecionado";
+            return;
+          }
           nomeArquivo.textContent = arquivo.files[0].name;
           esconderErro();
         } else {
-          nomeArquivo.textContent = "Nenhum arquivo selecionado";
+          nomeArquivo.textContent = "Nenhum documento selecionado";
+        }
+      });
+    }
+
+    if (imagem) {
+      imagem.addEventListener("change", function () {
+        if (imagem.files && imagem.files.length > 0) {
+          if (imagem.files[0].size > MAX_BYTES) {
+            mostrarErro("A imagem do card deve ter no máximo 10 MB.");
+            imagem.value = "";
+            nomeImagem.textContent = "Nenhuma imagem selecionada (usará capa padrão)";
+            return;
+          }
+          nomeImagem.textContent = imagem.files[0].name;
+          esconderErro();
+        } else {
+          nomeImagem.textContent = "Nenhuma imagem selecionada (usará capa padrão)";
         }
       });
     }
@@ -287,7 +336,11 @@
       for (const campo of campos) {
         if (campo.type === "file") {
           if (campo.required && (!campo.files || campo.files.length === 0)) {
-            mostrarErro("Por favor, selecione o arquivo PDF antes de enviar.");
+            mostrarErro("Por favor, selecione o documento do trabalho antes de enviar.");
+            return false;
+          }
+          if (campo.files && campo.files.length > 0 && campo.files[0].size > MAX_BYTES) {
+            mostrarErro("Cada arquivo deve ter no máximo 10 MB.");
             return false;
           }
           continue;

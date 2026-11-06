@@ -12,27 +12,86 @@
         <thead>
           <tr>
             <th>ID</th>
-            <th>Nome</th>
+            <th>Usuário</th>
             <th>E-mail</th>
-            <th>Função Atual</th>
-            <th>Ação</th>
+            <th>Função</th>
+            <th>Status</th>
+            <th>Ações</th>
           </tr>
         </thead>
         <tbody>
           {% for u in usuarios %}
-            <tr>
+            {% set u_ativo = u.get('ativo', True) %}
+            {% set u_foto = url_for('formulario.ver_arquivo', id=u.foto_arquivo_id) if u.foto_arquivo_id else url_for('static', filename='img/gato1.jpg') %}
+            <tr class="{{ '' if u_ativo else 'linha-inativa' }}">
               <td>{{ u.id }}</td>
-              <td>{{ u.nome }}</td>
-              <td>{{ u.email }}</td>
-              <td><strong>{{ u.funcao }}</strong></td>
               <td>
-                {% if u.funcao | lower != 'admin' %}
-                  <form method="POST" action="{{ url_for('usuario.promover', id=u.id) }}" class="form-inline">
-                    <button type="submit" class="botao botao--contorno">Tornar Admin</button>
-                  </form>
-                {% else %}
+                <div class="usuario-celula">
+                  <img class="tabela__avatar" src="{{ u_foto }}" alt="Foto de {{ u.nome }}">
+                  <span>{{ u.nome }}</span>
+                </div>
+              </td>
+              <td>{{ u.email }}</td>
+              <td>
+                {% if u.funcao | lower == 'admin' %}
                   <span class="badge-admin">Administrador</span>
+                {% else %}
+                  <strong>{{ u.funcao }}</strong>
                 {% endif %}
+              </td>
+              <td>
+                <span class="badge-status {{ 'badge-status--ativo' if u_ativo else 'badge-status--inativo' }}">
+                  {{ 'Ativo' if u_ativo else 'Inativo' }}
+                </span>
+              </td>
+              <td>
+                <div class="tabela__acoes">
+                  <a
+                    class="botao-icone botao-icone--editar"
+                    href="{{ url_for('usuario.editar', id=u.id) }}"
+                    title="Editar usuário"
+                    aria-label="Editar {{ u.nome }}"
+                  >
+                    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                      <path d="M18.37 2.63a2.12 2.12 0 0 1 3 3L14 13l-4 1 1-4 7.37-7.37zM11 6H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </a>
+
+                  {% if u.funcao | lower != 'admin' %}
+                    <form
+                      method="POST"
+                      action="{{ url_for('usuario.promover', id=u.id) }}"
+                      class="form-inline"
+                      data-confirm-title="Promover usuário?"
+                      data-confirm-text="Deseja tornar {{ u.nome }} um Administrador?"
+                      data-confirm-icon="question"
+                      data-confirm-btn="Sim, promover"
+                    >
+                      <button type="submit" class="botao botao--contorno" data-keep-text="true">Tornar Admin</button>
+                    </form>
+                  {% endif %}
+
+                  {% if u.id != session.get('usuario_id') %}
+                    <form
+                      method="POST"
+                      action="{{ url_for('usuario.inativar', id=u.id) }}"
+                      class="form-inline"
+                      data-confirm-title="{{ 'Inativar usuário?' if u_ativo else 'Reativar usuário?' }}"
+                      data-confirm-text="Deseja {{ 'inativar' if u_ativo else 'reativar' }} a conta de {{ u.nome }}?"
+                      data-confirm-icon="warning"
+                      data-confirm-btn="{{ 'Inativar' if u_ativo else 'Reativar' }}"
+                    >
+                      <input type="hidden" name="ativo" value="{{ '0' if u_ativo else '1' }}">
+                      <button
+                        type="submit"
+                        class="botao {{ 'botao--perigo' if u_ativo else 'botao--contorno' }}"
+                        data-keep-text="true"
+                      >
+                        {{ 'Inativar' if u_ativo else 'Ativar' }}
+                      </button>
+                    </form>
+                  {% endif %}
+                </div>
               </td>
             </tr>
           {% endfor %}

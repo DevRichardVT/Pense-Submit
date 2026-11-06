@@ -18,7 +18,8 @@ CREATE TABLE IF NOT EXISTS usuarios (
     nome VARCHAR(100) NOT NULL,
     email VARCHAR(100) NOT NULL,
     senha VARCHAR(20) NOT NULL,
-    foto_arquivo_id INTEGER REFERENCES arquivos(id) ON DELETE SET NULL
+    foto_arquivo_id INTEGER REFERENCES arquivos(id) ON DELETE SET NULL,
+    ativo BOOLEAN NOT NULL DEFAULT TRUE
 );
 
 CREATE TABLE IF NOT EXISTS modalidades_formularios (
@@ -47,6 +48,7 @@ CREATE TABLE IF NOT EXISTS formularios (
     modalidade_id INTEGER NOT NULL REFERENCES modalidades_formularios(id),
     instituicao_id INTEGER NOT NULL REFERENCES instituicoes(id),
     arquivo_id INTEGER REFERENCES arquivos(id) ON DELETE SET NULL,
+    imagem_arquivo_id INTEGER REFERENCES arquivos(id) ON DELETE SET NULL,
     titulo VARCHAR(50) NOT NULL,
     resumo TEXT NOT NULL,
     arquivo BYTEA,

@@ -296,3 +296,140 @@ def test_card_exibe_imagem_propria_icone_pincel_lixeira_e_hover_sem_botao_visual
     assert "card__acoes-topo" in html
     assert "card__hover-overlay" in html
     assert ">Visualizar<" not in html
+
+
+def test_usuario_normal_pode_editar_proprio_formulario_mas_nao_de_outro():
+    with patch("database.init_db"):
+        app = create_app(testing=True)
+    client = app.test_client()
+    with client.session_transaction() as sess:
+        sess["usuario_id"] = 7
+        sess["usuario_nome"] = "Autor"
+        sess["usuario_funcao"] = "normal"
+
+    trabalho_base = {
+        "id": 10,
+        "titulo": "Meu Trabalho",
+        "resumo": "Resumo",
+        "palavra_chave": "ia",
+        "area_conhecimento": "Computação",
+        "modalidade_id": 1,
+        "modalidade": "Pesquisa",
+        "autor_id": 1,
+        "autor_nome": "Autor",
+        "autor_email": "autor@ifrs.edu.br",
+        "autor_area": "TI",
+        "autor_cidade": "Farroupilha",
+        "instituicao_id": 1,
+        "instituicao_nome": "IFRS",
+        "instituicao_cidade": "Farroupilha",
+        "usuario_id": 7,
+        "usuario_foto_id": None,
+        "arquivo_id": 88,
+        "imagem_arquivo_id": None,
+    }
+
+    with patch(
+        "controllers.formulario_controller.Formulario.buscar_por_id",
+        return_value=trabalho_base,
+    ), patch(
+        "controllers.formulario_controller.Modalidade.listar_todas",
+        return_value=[{"id": 1, "descricao": "Pesquisa"}],
+    ):
+        resp_proprio = client.get("/trabalho/10/editar")
+
+    trabalho_outro = dict(trabalho_base, usuario_id=99)
+    with patch(
+        "controllers.formulario_controller.Formulario.buscar_por_id",
+        return_value=trabalho_outro,
+    ):
+        resp_outro = client.get("/trabalho/10/editar")
+
+    assert resp_proprio.status_code == 200
+    assert "botao-voltar" in resp_proprio.get_data(as_text=True)
+    assert resp_outro.status_code == 403
+
+
+def test_catalogo_solar_renderiza_threejs_e_planetas():
+    with patch("database.init_db"):
+        app = create_app(testing=True)
+    client = app.test_client()
+    with client.session_transaction() as sess:
+        sess["usuario_id"] = 2
+        sess["usuario_nome"] = "Visitante"
+        sess["usuario_funcao"] = "normal"
+
+    with patch(
+        "controllers.formulario_controller.Formulario.listar_todos",
+        return_value=[
+            {
+                "id": 15,
+                "titulo": "Planeta Quântico",
+                "resumo": "Resumo de teste orbital",
+                "palavra_chave": "física",
+                "area_conhecimento": "Exatas",
+                "modalidade_id": 1,
+                "modalidade": "Pesquisa",
+                "autor_id": 1,
+                "autor_nome": "Ana",
+                "autor_email": "ana@ifrs.edu.br",
+                "autor_area": "Física",
+                "autor_cidade": "Farroupilha",
+                "instituicao_id": 1,
+                "instituicao_nome": "IFRS",
+                "instituicao_cidade": "Farroupilha",
+                "usuario_id": 2,
+                "usuario_foto_id": 45,
+                "arquivo_id": 88,
+                "imagem_arquivo_id": 120,
+            }
+        ],
+    ):
+        resp = client.get("/catalogo")
+
+    html = resp.get_data(as_text=True)
+    assert resp.status_code == 200
+    assert "three.module.js" in html
+    assert "OrbitControls.js" in html
+    assert "Resumo de teste orbital" in html
+    assert "solar-canvas-wrap" in html
+
+
+def test_submissao_sem_anexo_exibe_aviso_ao_usuario():
+    with patch("database.init_db"):
+        app = create_app(testing=True)
+    client = app.test_client()
+    with client.session_transaction() as sess:
+        sess["usuario_id"] = 2
+        sess["usuario_nome"] = "Normal"
+        sess["usuario_funcao"] = "normal"
+
+    with patch(
+        "controllers.formulario_controller.Modalidade.listar_todas",
+        return_value=[{"id": 1, "descricao": "Pesquisa"}],
+    ), patch(
+        "controllers.formulario_controller.Modalidade.buscar_por_id",
+        return_value={"id": 1, "descricao": "Pesquisa"},
+    ):
+        resp_get = client.get("/formulario")
+        resp_post = client.post(
+            "/formulario",
+            data={
+                "autor_nome": "Ana",
+                "autor_email": "ana@ifrs.edu.br",
+                "autor_area": "Física",
+                "autor_cidade": "Farroupilha",
+                "instituicao_nome": "IFRS",
+                "instituicao_cidade": "Farroupilha",
+                "titulo": "Sem Anexo",
+                "palavra_chave": "teste",
+                "area_conhecimento": "Exatas",
+                "modalidade_id": "1",
+                "resumo": "Resumo sem anexo",
+            },
+            content_type="multipart/form-data",
+        )
+
+    assert 'data-obrigatorio="true"' in resp_get.get_data(as_text=True)
+    assert resp_post.status_code == 400
+    assert "obrigatório" in resp_post.get_data(as_text=True).lower()

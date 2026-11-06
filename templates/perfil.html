@@ -4,6 +4,16 @@
 
 {% block conteudo %}
 {% set foto_url = url_for('formulario.ver_arquivo', id=u.foto_arquivo_id) if u.foto_arquivo_id else url_for('static', filename='img/gato1.jpg') %}
+{% set url_retorno = url_for('usuario.listar') if session.get('usuario_funcao') | lower == 'admin' and session.get('usuario_id') != u.id else url_for('formulario.index') %}
+<div class="barra-voltar barra-voltar--estreito">
+  <a class="botao-voltar" href="{{ url_retorno }}">
+    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+      <path d="M19 12H5M12 19l-7-7 7-7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    Voltar
+  </a>
+</div>
+
 <section class="formulario formulario--estreito">
   <h1 class="formulario__titulo">Editar Usuário</h1>
 
@@ -60,7 +70,12 @@
     </div>
 
     <div class="formulario__acoes">
-      <a class="botao botao--secundario" href="{{ url_for('usuario.listar') if session.get('usuario_funcao') | lower == 'admin' and session.get('usuario_id') != u.id else url_for('formulario.index') }}">VOLTAR</a>
+      <a class="botao-voltar" href="{{ url_retorno }}">
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+          <path d="M19 12H5M12 19l-7-7 7-7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Voltar
+      </a>
       <button type="submit" class="botao botao--principal">SALVAR</button>
     </div>
   </form>
